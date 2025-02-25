@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code-Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .code-display {
+            font-family: monospace;
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 4px;
+            text-align: center;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .explanation {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Code-Generator</h1>
+        <p>Schema: YDDDLFFHMMSS-NNN</p>
+        
+        <div class="code-display" id="codeOutput">
+            Code wird generiert...
+        </div>
+        
+        <button id="generateBtn">Jetzt</button>
+        
+        <div class="explanation">
+            <h3>Code-Erklärung:</h3>
+            <p><strong>Y</strong>: Letzte Ziffer des aktuellen Jahres</p>
+            <p><strong>DDD</strong>: Tag des Jahres (dreistellig)</p>
+            <p><strong>L</strong>: Standort (B=Berlin, L=Lodz, N=Manaus, Q=Milenio, S=Boston, V=BenCat)</p>
+            <p><strong>FF</strong>: Maschinennummer (zwei Buchstaben außer i und o)</p>
+            <p><strong>H</strong>: Stunde (Buchstabe außer i und o)</p>
+            <p><strong>MM</strong>: Aktuelle Minute</p>
+            <p><strong>SS</strong>: Aktuelle Sekunde</p>
+            <p><strong>NNN</strong>: Zufallszahl zwischen 0 und 101 (dreistellig)</p>
+        </div>
+    </div>
+
+    <script>
+        // Funktion zum Generieren des Codes nach dem Schema YDDDLFFHMMSS-NNN
+        function generateCode() {
+            const now = new Date();
+            
+            // Y: letzte Ziffer des aktuellen Jahres
+            const year = now.getFullYear().toString().slice(-1);
+            
+            // DDD: Tag des Jahres (dreistellig)
+            const startOfYear = new Date(now.getFullYear(), 0, 0);
+            const diff = now - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const dayOfYear = Math.floor(diff / oneDay);
+            const ddd = dayOfYear.toString().padStart(3, '0');
+            
+            // L: Standort 
+            const locations = {
+                'Berlin': 'B',
+                'Lodz': 'L',
+                'Manaus': 'N',
+                'Milenio': 'Q',
+                'Boston': 'S',
+                'BenCat': 'V'
+            };
+            
+            // Für das Beispiel nehmen wir Berlin als Standort
+            const location = locations['Berlin'];
+            
+            // FF: Maschinennummer (zwei Buchstaben außer i und o)
+            function getRandomMachineLetter() {
+                const validLetters = 'abcdefghjklmnpqrstuvwxyz'.toUpperCase().split('');
+                return validLetters[Math.floor(Math.random() * validLetters.length)];
+            }
+            
+            const machineLetters = getRandomMachineLetter() + getRandomMachineLetter();
+            
+            // H: Stunde (Buchstabe außer i und o)
+            function getHourLetter(hour) {
+                // A=0, B=1, ... ohne I und O
+                const hourLetters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+                return hourLetters[hour % 24];
+            }
+            
+            const hourLetter = getHourLetter(now.getHours());
+            
+            // MM: Aktuelle Minute
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            // SS: Aktuelle Sekunde
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            
+            // NNN: Zufallszahl zwischen 0 und 101 (dreistellig)
+            const randomNum = Math.floor(Math.random() * 102).toString().padStart(3, '0');
+            
+            // Zusammensetzen des Codes
+            return `${year}${ddd}${location}${machineLetters}${hourLetter}${minutes}${seconds}-${randomNum}`;
+        }
+        
+        // Code beim Laden generieren
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('codeOutput').textContent = generateCode();
+            
+            // Button-Event hinzufügen
+            document.getElementById('generateBtn').addEventListener('click', function() {
+                document.getElementById('codeOutput').textContent = generateCode();
+            });
+        });
+    </script>
+</body>
+</html>
