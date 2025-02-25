@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zahlensystem-Umrechner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .input-group label {
+            width: 120px;
+            display: inline-block;
+        }
+        input[type="text"] {
+            padding: 5px;
+            width: 200px;
+        }
+        .checkbox-container {
+            margin: 20px 0;
+        }
+        .bit-group {
+            display: inline-block;
+            margin: 0 15px 0 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .bit-group-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .checkbox-item {
+            display: inline-block;
+            margin-right: 5px;
+            text-align: center;
+        }
+        .bit-label {
+            display: block;
+            text-align: center;
+            font-size: 12px;
+        }
+        .error {
+            color: red;
+            display: none;
+            margin-top: 10px;
+        }
+        .button-group {
+            margin: 20px 0;
+        }
+        .button-group button {
+            margin-right: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>16-Bit Zahlensystem-Umrechner</h1>
+    
+    <div class="input-group">
+        <label>Dezimal:</label>
+        <input type="text" id="decimal" placeholder="Dezimalzahl eingeben">
+    </div>
+    
+    <div class="input-group">
+        <label>Hexadezimal:</label>
+        <input type="text" id="hexadecimal" placeholder="Hexadezimalzahl eingeben">
+    </div>
+    
+    <div class="input-group">
+        <label>Oktal:</label>
+        <input type="text" id="octal" placeholder="Oktalzahl eingeben">
+    </div>
+    
+    <div class="input-group">
+        <label>Binär:</label>
+        <input type="text" id="binary" placeholder="Binärzahl eingeben">
+    </div>
+
+    <div class="button-group">
+        <button id="invertBits">Alle Bits invertieren</button>
+        <button id="setAllOnes">Alle Bits auf 1 setzen</button>
+    </div>
+
+    <h3>Binär Checkboxen:</h3>
+    <div class="checkbox-container">
+        <div class="bit-group">
+            <div class="bit-group-label">Bits 15-12</div>
+            <div id="group1"></div>
+        </div>
+        <div class="bit-group">
+            <div class="bit-group-label">Bits 11-8</div>
+            <div id="group2"></div>
+        </div>
+        <div class="bit-group">
+            <div class="bit-group-label">Bits 7-4</div>
+            <div id="group3"></div>
+        </div>
+        <div class="bit-group">
+            <div class="bit-group-label">Bits 3-0</div>
+            <div id="group4"></div>
+        </div>
+    </div>
+
+    <div class="error" id="errorMessage">
+        Fehler: Bitte geben Sie eine gültige 16-Bit Zahl ein (0-65535)
+    </div>
+
+    <script>
+        // Maximaler 16-Bit Wert
+        const MAX_VALUE = 65535;
+        
+        // DOM Elemente
+        const decimalInput = document.getElementById('decimal');
+        const hexInput = document.getElementById('hexadecimal');
+        const octalInput = document.getElementById('octal');
+        const binaryInput = document.getElementById('binary');
+        const errorMessage = document.getElementById('errorMessage');
+        const invertButton = document.getElementById('invertBits');
+        const setAllOnesButton = document.getElementById('setAllOnes');
+
+        // Erstelle gruppierte Checkboxen
+        function createBitGroups() {
+            for (let group = 0; group < 4; group++) {
+                const startBit = 15 - (group * 4);
+                const groupElement = document.getElementById(`group${group + 1}`);
+                
+                for (let i = 0; i < 4; i++) {
+                    const bitPosition = startBit - i;
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'checkbox-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `bit${bitPosition}`;
+                    
+                    const label = document.createElement('label');
+                    label.className = 'bit-label';
+                    label.textContent = bitPosition;
+                    
+                    checkboxItem.appendChild(checkbox);
+                    checkboxItem.appendChild(label);
+                    groupElement.appendChild(checkboxItem);
+
+                    checkbox.addEventListener('change', () => {
+                        const binaryString = getBinaryFromCheckboxes();
+                        const decimal = parseInt(binaryString, 2);
+                        updateAllInputs(decimal);
+                    });
+                }
+            }
+        }
+
+        // Funktion zum Aktualisieren der Checkboxen
+        function updateCheckboxes(decimal) {
+            const binary = decimal.toString(2).padStart(16, '0');
+            for (let i = 0; i < 16; i++) {
+                const checkbox = document.getElementById(`bit${15-i}`);
+                checkbox.checked = binary[i] === '1';
+            }
+        }
+
+        // Funktion zum Auslesen der Checkboxen
+        function getBinaryFromCheckboxes() {
+            let binary = '';
+            for (let i = 15; i >= 0; i--) {
+                const checkbox = document.getElementById(`bit${i}`);
+                binary += checkbox.checked ? '1' : '0';
+            }
+            return binary;
+        }
+
+        // Funktion zur Validierung und Aktualisierung aller Eingabefelder
+        function updateAllInputs(decimal) {
+            if (isNaN(decimal) || decimal < 0 || decimal > MAX_VALUE) {
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            errorMessage.style.display = 'none';
+            
+            decimalInput.value = decimal;
+            hexInput.value = decimal.toString(16).toUpperCase();
+            octalInput.value = decimal.toString(8);
+            binaryInput.value = decimal.toString(2).padStart(16, '0');
+            updateCheckboxes(decimal);
+        }
+
+        // Funktion zum Invertieren aller Bits
+        function invertAllBits() {
+            const currentDecimal = parseInt(decimalInput.value) || 0;
+            const invertedDecimal = currentDecimal ^ MAX_VALUE;
+            updateAllInputs(invertedDecimal);
+        }
+
+        // Funktion zum Setzen aller Bits auf 1
+        function setAllBitsToOne() {
+            updateAllInputs(MAX_VALUE);
+        }
+
+        // Event Listeners für Eingabefelder
+        decimalInput.addEventListener('input', (e) => {
+            const decimal = parseInt(e.target.value);
+            updateAllInputs(decimal);
+        });
+
+        hexInput.addEventListener('input', (e) => {
+            const decimal = parseInt(e.target.value, 16);
+            updateAllInputs(decimal);
+        });
+
+        octalInput.addEventListener('input', (e) => {
+            const decimal = parseInt(e.target.value, 8);
+            updateAllInputs(decimal);
+        });
+
+        binaryInput.addEventListener('input', (e) => {
+            const decimal = parseInt(e.target.value, 2);
+            updateAllInputs(decimal);
+        });
+
+        // Event Listeners für Buttons
+        invertButton.addEventListener('click', invertAllBits);
+        setAllOnesButton.addEventListener('click', setAllBitsToOne);
+
+        // Initialisierung
+        createBitGroups();
+        updateAllInputs(0);
+    </script>
+</body>
+</html>
