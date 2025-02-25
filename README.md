@@ -1,5 +1,6 @@
 # Tools Pages
 Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzung im Browser.
 
-[Link Bin Here](Bin_Claude.html)
+[Bin](Bin_Claude.html)
+[VDC] (/vdc-fr-chatGPT.html)
 
