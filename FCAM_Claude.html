@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code-Generator</title>
+    <title>Code-Generator und Dekoder</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -16,6 +16,7 @@
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
         .code-display {
             font-family: monospace;
@@ -45,18 +46,92 @@
             font-size: 14px;
             color: #666;
         }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #ddd;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .result-box {
+            background-color: #e9f7ef;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .result-item {
+            margin-bottom: 8px;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Code-Generator</h1>
+    <h1>Code-Generator und Dekoder</h1>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="generator">Generator</div>
+        <div class="tab" data-tab="decoder">Dekoder</div>
+    </div>
+    
+    <div id="generator" class="tab-content active container">
+        <h2>Code-Generator</h2>
         <p>Schema: YDDDLFFHMMSS-NNN</p>
+        
+        <div class="form-group">
+            <label for="location">Standort:</label>
+            <select id="location">
+                <option value="B">Berlin</option>
+                <option value="L">Lodz</option>
+                <option value="N">Manaus</option>
+                <option value="Q">Milenio</option>
+                <option value="S">Boston</option>
+                <option value="V">BenCat</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="machineNumber">Maschinennummer (0-24):</label>
+            <input type="number" id="machineNumber" min="0" max="24" value="3">
+        </div>
         
         <div class="code-display" id="codeOutput">
             Code wird generiert...
         </div>
         
-        <button id="generateBtn">Jetzt</button>
+        <button id="generateBtn">Jetzt generieren</button>
         
         <div class="explanation">
             <h3>Code-Erklärung:</h3>
@@ -70,9 +145,90 @@
             <p><strong>NNN</strong>: Zufallszahl zwischen 0 und 101 (dreistellig)</p>
         </div>
     </div>
+    
+    <div id="decoder" class="tab-content container">
+        <h2>Code-Dekoder</h2>
+        
+        <div class="form-group">
+            <label for="codeInput">Code eingeben (Format: YDDDLFFHMMSS-NNN):</label>
+            <input type="text" id="codeInput" placeholder="z.B. 5056BCAK1234-042">
+        </div>
+        
+        <button id="decodeBtn">Dekodieren</button>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="result-box" id="decodedResult" style="display: none;">
+            <h3>Dekodiertes Ergebnis:</h3>
+            <div class="result-item"><strong>Datum:</strong> <span id="resultDate"></span></div>
+            <div class="result-item"><strong>Uhrzeit:</strong> <span id="resultTime"></span></div>
+            <div class="result-item"><strong>Standort:</strong> <span id="resultLocation"></span></div>
+            <div class="result-item"><strong>Maschinennummer:</strong> <span id="resultMachine"></span></div>
+            <div class="result-item"><strong>Zufallsnummer:</strong> <span id="resultRandom"></span></div>
+        </div>
+    </div>
 
     <script>
-        // Funktion zum Generieren des Codes nach dem Schema YDDDLFFHMMSS-NNN
+        // Alphabet ohne i und o für Kodierung der Maschinennummern und Stunden
+        const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        
+        // Standorte Mapping
+        const locations = {
+            'B': 'Berlin',
+            'L': 'Lodz',
+            'N': 'Manaus',
+            'Q': 'Milenio',
+            'S': 'Boston',
+            'V': 'BenCat'
+        };
+        
+        const reverseLocations = {};
+        for (const key in locations) {
+            reverseLocations[locations[key]] = key;
+        }
+        
+        // Funktion zum Konvertieren der Maschinennummer zu Buchstaben
+        function convertMachineNumberToLetters(machineNumber) {
+            // Wir nehmen an, dass die Maschinennummer zwischen 0 und 24 liegt
+            machineNumber = parseInt(machineNumber);
+            if (isNaN(machineNumber) || machineNumber < 0 || machineNumber > 24) {
+                machineNumber = 0;
+            }
+            
+            // Zwei Buchstaben finden, deren Summe der Maschinennummer entspricht
+            const firstIndex = Math.min(machineNumber, alphabet.length - 1);
+            const secondIndex = 0;
+            
+            return alphabet[firstIndex] + alphabet[secondIndex];
+        }
+        
+        // Funktion zum Dekodieren der Maschinenbuchstaben
+        function decodeMachineLetters(letters) {
+            if (letters.length !== 2) return 0;
+            
+            const firstLetter = letters[0].toUpperCase();
+            const secondLetter = letters[1].toUpperCase();
+            
+            const firstIndex = alphabet.indexOf(firstLetter);
+            const secondIndex = alphabet.indexOf(secondLetter);
+            
+            if (firstIndex === -1 || secondIndex === -1) return 0;
+            
+            // In diesem Fall ist es die Summe der Indizes
+            return firstIndex + secondIndex;
+        }
+        
+        // Funktion zum Konvertieren der Stunde zu einem Buchstaben
+        function getHourLetter(hour) {
+            return alphabet[hour % alphabet.length];
+        }
+        
+        // Funktion zum Dekodieren des Stundenbuchstabens
+        function decodeHourLetter(letter) {
+            return alphabet.indexOf(letter.toUpperCase());
+        }
+        
+        // Funktion zum Generieren des Codes
         function generateCode() {
             const now = new Date();
             
@@ -87,33 +243,13 @@
             const ddd = dayOfYear.toString().padStart(3, '0');
             
             // L: Standort 
-            const locations = {
-                'Berlin': 'B',
-                'Lodz': 'L',
-                'Manaus': 'N',
-                'Milenio': 'Q',
-                'Boston': 'S',
-                'BenCat': 'V'
-            };
+            const location = document.getElementById('location').value;
             
-            // Für das Beispiel nehmen wir Berlin als Standort
-            const location = locations['Berlin'];
-            
-            // FF: Maschinennummer (zwei Buchstaben außer i und o)
-            function getRandomMachineLetter() {
-                const validLetters = 'abcdefghjklmnpqrstuvwxyz'.toUpperCase().split('');
-                return validLetters[Math.floor(Math.random() * validLetters.length)];
-            }
-            
-            const machineLetters = getRandomMachineLetter() + getRandomMachineLetter();
+            // FF: Maschinennummer 
+            const machineNumber = document.getElementById('machineNumber').value;
+            const machineLetters = convertMachineNumberToLetters(machineNumber);
             
             // H: Stunde (Buchstabe außer i und o)
-            function getHourLetter(hour) {
-                // A=0, B=1, ... ohne I und O
-                const hourLetters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-                return hourLetters[hour % 24];
-            }
-            
             const hourLetter = getHourLetter(now.getHours());
             
             // MM: Aktuelle Minute
@@ -129,13 +265,109 @@
             return `${year}${ddd}${location}${machineLetters}${hourLetter}${minutes}${seconds}-${randomNum}`;
         }
         
-        // Code beim Laden generieren
+        // Funktion zum Dekodieren des Codes
+        function decodeCode(code) {
+            // Überprüfen des Formats
+            const regex = /^(\d)(\d{3})([BLNQSV])([A-HJ-NP-Z]{2})([A-HJ-NP-Z])(\d{2})(\d{2})-(\d{3})$/;
+            const match = code.match(regex);
+            
+            if (!match) {
+                throw new Error("Ungültiges Code-Format. Bitte überprüfen Sie Ihre Eingabe.");
+            }
+            
+            const [_, year, dayOfYear, locationCode, machineLetters, hourLetter, minutes, seconds, randomNum] = match;
+            
+            // Jahr berechnen (aktuelle Dekade annehmen)
+            const currentYear = new Date().getFullYear();
+            const currentDecade = Math.floor(currentYear / 10) * 10;
+            const fullYear = currentDecade + parseInt(year);
+            
+            // Datum berechnen
+            const date = new Date(fullYear, 0, parseInt(dayOfYear));
+            
+            // Standort dekodieren
+            const location = locations[locationCode] || "Unbekannt";
+            
+            // Maschinennummer dekodieren
+            const machineNumber = decodeMachineLetters(machineLetters);
+            
+            // Stunde dekodieren
+            const hour = decodeHourLetter(hourLetter);
+            
+            // Formatiertes Datum und Uhrzeit
+            const formattedDate = date.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            
+            const formattedTime = `${hour.toString().padStart(2, '0')}:${minutes}:${seconds}`;
+            
+            return {
+                date: formattedDate,
+                time: formattedTime,
+                location: location,
+                machineNumber: `G${machineNumber.toString().padStart(2, '0')}`,
+                randomNumber: parseInt(randomNum)
+            };
+        }
+        
+        // Tab-Funktionalität
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Alle Tabs und Tab-Inhalte deaktivieren
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Ausgewählten Tab und Inhalt aktivieren
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // Dokument geladen
         document.addEventListener('DOMContentLoaded', function() {
+            // Tabs einrichten
+            setupTabs();
+            
+            // Initialen Code generieren
             document.getElementById('codeOutput').textContent = generateCode();
             
-            // Button-Event hinzufügen
+            // Generator-Button-Event
             document.getElementById('generateBtn').addEventListener('click', function() {
                 document.getElementById('codeOutput').textContent = generateCode();
+            });
+            
+            // Dekoder-Button-Event
+            document.getElementById('decodeBtn').addEventListener('click', function() {
+                const code = document.getElementById('codeInput').value.trim();
+                const errorElement = document.getElementById('errorMessage');
+                const resultElement = document.getElementById('decodedResult');
+                
+                try {
+                    const decoded = decodeCode(code);
+                    
+                    // Ergebnisse anzeigen
+                    document.getElementById('resultDate').textContent = decoded.date;
+                    document.getElementById('resultTime').textContent = decoded.time;
+                    document.getElementById('resultLocation').textContent = decoded.location;
+                    document.getElementById('resultMachine').textContent = decoded.machineNumber;
+                    document.getElementById('resultRandom').textContent = decoded.randomNumber;
+                    
+                    // Ergebnisbox anzeigen
+                    errorElement.textContent = '';
+                    resultElement.style.display = 'block';
+                    
+                } catch (error) {
+                    // Fehler anzeigen
+                    errorElement.textContent = error.message;
+                    resultElement.style.display = 'none';
+                }
             });
         });
     </script>
