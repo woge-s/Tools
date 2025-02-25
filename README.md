@@ -3,5 +3,7 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [BinOctDezHex 16](Bin_Claude.html)
 
-[FCAM](vdc-fr-chatGPT.html)
+[FCAM](FCAM_Claude.html)
+
+[ VDC ](vdc-fr-chatGPT.html)
 
