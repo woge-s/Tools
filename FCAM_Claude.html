@@ -269,7 +269,7 @@
         function decodeCode(code) {
             // Überprüfen des Formats
             const regex = /^(\d)(\d{3})([BLNQSV])([A-HJ-NP-Z]{2})([A-HJ-NP-Z])(\d{2})(\d{2})-(\d{3})$/;
-            const match = code.match(regex);
+            const match = code.toUpperCase().match(regex);
             
             if (!match) {
                 throw new Error("Ungültiges Code-Format. Bitte überprüfen Sie Ihre Eingabe.");
