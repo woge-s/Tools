@@ -78,7 +78,7 @@
         }
 
         function decodeCode() {
-            const code = document.getElementById('codeInput').value.trim();
+            const code = document.getElementById('codeInput').value.trim().toUpperCase();
             if (code.length !== 12 || code[5] !== ' ') {
                 alert("Ungültiger Code. Bitte überprüfen Sie die Eingabe.");
                 return;
