@@ -21,6 +21,16 @@
         }
     </style>
     <script>
+        function toCustomLetter(number) {
+            const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+            return alphabet[number];
+        }
+
+        function fromCustomLetter(letter) {
+            const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+            return alphabet.indexOf(letter);
+        }
+
         function generateCode() {
             const now = new Date();
             const yearLastDigit = now.getFullYear() % 10;
@@ -29,10 +39,10 @@
 
             const machineNumber = parseInt(document.getElementById('machineNumber').value);
             const location = (machineNumber <= 2) ? 'S' : 'B';
-            const machineLetter = String.fromCharCode(65 + machineNumber - 1);
+            const machineLetter = toCustomLetter(machineNumber - 1);
 
             const hour = now.getHours();
-            const hourLetter = String.fromCharCode(65 + hour % 24);
+            const hourLetter = toCustomLetter(hour % 24);
 
             const minutes = now.getMinutes();
             const minutesString = String(minutes).padStart(2, '0');
@@ -52,10 +62,10 @@
 
             const machineNumber = Math.floor(Math.random() * 5) + 1;
             const location = (machineNumber <= 2) ? 'S' : 'B';
-            const machineLetter = String.fromCharCode(65 + machineNumber - 1);
+            const machineLetter = toCustomLetter(machineNumber - 1);
 
             const hour = now.getHours();
-            const hourLetter = String.fromCharCode(65 + hour % 24);
+            const hourLetter = toCustomLetter(hour % 24);
 
             const minutes = now.getMinutes();
             const minutesString = String(minutes).padStart(2, '0');
@@ -86,13 +96,13 @@
             const date = new Date(year, 0, 1);
             date.setDate(dayOfYear);
 
-            const machineNumber = machineLetter.charCodeAt(0) - 64;
+            const machineNumber = fromCustomLetter(machineLetter) + 1;
             if (machineNumber < 1 || machineNumber > 5) {
                 alert("Ungültige Maschinennummer. Bitte überprüfen Sie die Eingabe.");
                 return;
             }
 
-            const hour = hourLetter.charCodeAt(0) - 65;
+            const hour = fromCustomLetter(hourLetter);
 
             document.getElementById('decodedResult').innerText = `Datum: ${date.toDateString()}\nUhrzeit: ${hour}:${minutes}\nMaschinennummer: ${machineNumber}\nToolnummer: ${toolNumber}`;
         }
