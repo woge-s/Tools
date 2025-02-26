@@ -3,139 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Generator und Decoder</title>
+    <title>Zahlensystem-Umrechner mit Datum und Uhrzeit</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
         }
-        .section {
-            margin-bottom: 20px;
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
         }
-        label {
-            display: block;
-            margin-top: 10px;
+        .buttons {
+            margin-top: 20px;
         }
-        button {
-            margin-top: 10px;
+        .datetime-inputs {
+            margin-top: 20px;
         }
     </style>
-    <script>
-        function toCustomLetter(number) {
-            const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-            return alphabet[number];
-        }
-
-        function fromCustomLetter(letter) {
-            const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-            return alphabet.indexOf(letter);
-        }
-
-        function generateCode() {
-            const now = new Date();
-            const yearLastDigit = now.getFullYear() % 10;
-            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)) + 1;
-            const dayOfYearString = String(dayOfYear).padStart(3, '0');
-
-            const machineNumber = parseInt(document.getElementById('machineNumber').value);
-            const location = (machineNumber <= 2) ? 'S' : 'B';
-            const machineLetter = toCustomLetter(machineNumber - 1);
-
-            const hour = now.getHours();
-            const hourLetter = toCustomLetter(hour % 24);
-
-            const minutes = now.getMinutes();
-            const minutesString = String(minutes).padStart(2, '0');
-
-            const toolNumber = parseInt(document.getElementById('toolNumber').value);
-            const toolNumberString = String(toolNumber).padStart(2, '0');
-
-            const code = `${yearLastDigit}${dayOfYearString}${location} ${machineLetter}${hourLetter}${minutesString}${toolNumberString}`;
-            document.getElementById('codeDisplay').innerText = code;
-        }
-
-        function generateCodeNow() {
-            const now = new Date();
-            const yearLastDigit = now.getFullYear() % 10;
-            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)) + 1;
-            const dayOfYearString = String(dayOfYear).padStart(3, '0');
-
-            const machineNumber = Math.floor(Math.random() * 5) + 1;
-            const location = (machineNumber <= 2) ? 'S' : 'B';
-            const machineLetter = toCustomLetter(machineNumber - 1);
-
-            const hour = now.getHours();
-            const hourLetter = toCustomLetter(hour % 24);
-
-            const minutes = now.getMinutes();
-            const minutesString = String(minutes).padStart(2, '0');
-
-            const toolNumber = Math.floor(Math.random() * 20) + 1;
-            const toolNumberString = String(toolNumber).padStart(2, '0');
-
-            const code = `${yearLastDigit}${dayOfYearString}${location} ${machineLetter}${hourLetter}${minutesString}${toolNumberString}`;
-            document.getElementById('codeDisplay').innerText = code;
-        }
-
-        function decodeCode() {
-            const code = document.getElementById('codeInput').value.trim().toUpperCase();
-            if (code.length !== 12 || code[5] !== ' ') {
-                alert("Ungültiger Code. Bitte überprüfen Sie die Eingabe.");
-                return;
-            }
-
-            const yearLastDigit = code[0];
-            const dayOfYear = parseInt(code.substring(1, 4));
-            const location = code[4];
-            const machineLetter = code[6];
-            const hourLetter = code[7];
-            const minutes = code.substring(8, 10);
-            const toolNumber = parseInt(code.substring(10, 12));
-
-            const year = 2020 + parseInt(yearLastDigit);
-            const date = new Date(year, 0, 1);
-            date.setDate(dayOfYear);
-
-            const machineNumber = fromCustomLetter(machineLetter) + 1;
-            if (machineNumber < 1 || machineNumber > 5) {
-                alert("Ungültige Maschinennummer. Bitte überprüfen Sie die Eingabe.");
-                return;
-            }
-
-            const hour = fromCustomLetter(hourLetter);
-
-            document.getElementById('decodedResult').innerText = `Datum: ${date.toDateString()}\nUhrzeit: ${hour}:${minutes}\nMaschinennummer: ${machineNumber}\nToolnummer: ${toolNumber}`;
-        }
-    </script>
 </head>
 <body>
-    <h1>Code Generator und Decoder</h1>
-
-    <div class="section">
-        <h2>Code Generator</h2>
-        <label for="machineNumber">Maschinennummer (1-5):</label>
-        <select id="machineNumber">
-            <option value="1">Maschine 1 (Boston)</option>
-            <option value="2">Maschine 2 (Boston)</option>
-            <option value="3">Maschine 3 (Berlin)</option>
-            <option value="4">Maschine 4 (Berlin)</option>
-            <option value="5">Maschine 5 (Berlin)</option>
-        </select>
-
-        <label for="toolNumber">Toolnummer (1-20):</label>
-        <input type="number" id="toolNumber" min="1" max="20">
-
-        <button onclick="generateCode()">Code Generieren</button>
-        <button onclick="generateCodeNow()">Jetzt</button>
-        <p id="codeDisplay">Hier wird der generierte Code angezeigt.</p>
+    <h1>Zahlensystem-Umrechner mit Datum und Uhrzeit</h1>
+    <div>
+        <label for="decimal">Dezimal:</label>
+        <input type="number" id="decimal" min="0" max="65535" value="0">
+    </div>
+    <div>
+        <label for="hex">Hexadezimal:</label>
+        <input type="text" id="hex" value="0">
+    </div>
+    <div>
+        <label for="octal">Oktal:</label>
+        <input type="text" id="octal" value="0">
+    </div>
+    <div>
+        <label for="binary">Binär:</label>
+        <input type="text" id="binary" value="0000000000000000">
+    </div>
+    <div>
+        <label>Binär (Checkboxen):</label>
+        <div class="checkbox-group">
+            <div class="checkbox-grid" id="binary-checkboxes-1">
+                <!-- Checkboxes werden dynamisch erzeugt -->
+            </div>
+            <div class="checkbox-grid" id="binary-checkboxes-2">
+                <!-- Checkboxes werden dynamisch erzeugt -->
+            </div>
+        </div>
+        <div class="checkbox-group">
+            <div class="checkbox-grid" id="binary-checkboxes-3">
+                <!-- Checkboxes werden dynamisch erzeugt -->
+            </div>
+            <div class="checkbox-grid" id="binary-checkboxes-4">
+                <!-- Checkboxes werden dynamisch erzeugt -->
+            </div>
+        </div>
+    </div>
+    <div class="buttons">
+        <button id="invert-bits">Bits invertieren</button>
+        <button id="set-all-bits">Alle Bits auf 1 setzen</button>
+    </div>
+    <div class="datetime-inputs">
+        <label for="date">Datum:</label>
+        <input type="date" id="date">
+        <label for="time">Uhrzeit:</label>
+        <input type="time" id="time">
     </div>
 
-    <div class="section">
-        <h2>Code Decoder</h2>
-        <label for="codeInput">Code eingeben:</label>
-        <input type="text" id="codeInput">
-        <button onclick="decodeCode()">Code Decodieren</button>
-        <p id="decodedResult">Hier wird das Decodierergebnis angezeigt.</p>
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const decimalInput = document.getElementById('decimal');
+            const hexInput = document.getElementById('hex');
+            const octalInput = document.getElementById('octal');
+            const binaryInput = document.getElementById('binary');
+            const invertBitsButton = document.getElementById('invert-bits');
+            const setAllBitsButton = document.getElementById('set-all-bits');
+            const dateInput = document.getElementById('date');
+            const timeInput = document.getElementById('time');
+
+            const binaryCheckboxesContainer1 = document.getElementById('binary-checkboxes-1');
+            const binaryCheckboxesContainer2 = document.getElementById('binary-checkboxes-2');
+            const binaryCheckboxesContainer3 = document.getElementById('binary-checkboxes-3');
+            const binaryCheckboxesContainer4 = document.getElementById('binary-checkboxes-4');
+
+            // Erstelle 16 Checkboxen für die binäre Darstellung
+            const binaryCheckboxes = [];
+            for (let i = 0; i < 4; i++) {
+                binaryCheckboxes.push(document.createElement('input'));
+                binaryCheckboxes[i].type = 'checkbox';
+                binaryCheckboxesContainer1.appendChild(binaryCheckboxes[i]);
+            }
+            for (let i = 4; i < 8; i++) {
+                binaryCheckboxes.push(document.createElement('input'));
+                binaryCheckboxes[i].type = 'checkbox';
+                binaryCheckboxesContainer2.appendChild(binaryCheckboxes[i]);
+            }
+            for (let i = 8; i < 12; i++) {
+                binaryCheckboxes.push(document.createElement('input'));
+                binaryCheckboxes[i].type = 'checkbox';
+                binaryCheckboxesContainer3.appendChild(binaryCheckboxes[i]);
+            }
+            for (let i = 12; i < 16; i++) {
+                binaryCheckboxes.push(document.createElement('input'));
+                binaryCheckboxes[i].type = 'checkbox';
+                binaryCheckboxesContainer4.appendChild(binaryCheckboxes[i]);
+            }
+
+            // Funktion zur Aktualisierung der Werte
+            function updateValues() {
+                const decimalValue = parseInt(decimalInput.value, 10);
+                const hexValue = decimalValue.toString(16).toUpperCase().padStart(4, '0');
+                const octalValue = decimalValue.toString(8).padStart(6, '0');
+                const binaryValue = decimalValue.toString(2).padStart(16, '0');
+
+                hexInput.value = hexValue;
+                octalInput.value = octalValue;
+                binaryInput.value = binaryValue;
+
+                // Aktualisiere die Checkboxen
+                binaryValue.split('').forEach((bit, index) => {
+                    binaryCheckboxes[index].checked = bit === '1';
+                });
+            }
+
+            // Funktion zur Aktualisierung der Werte basierend auf Checkboxen
+            function updateFromCheckboxes() {
+                let binaryValue = '';
+                binaryCheckboxes.forEach(checkbox => {
+                    binaryValue += checkbox.checked ? '1' : '0';
+                });
+
+                const decimalValue = parseInt(binaryValue, 2);
+                decimalInput.value = decimalValue;
+                updateValues();
+            }
+
+            // Event-Listener für Eingabefelder
+            decimalInput.addEventListener('input', updateValues);
+            hexInput.addEventListener('input', () => {
+                const hexValue = hexInput.value;
+                const decimalValue = parseInt(hexValue, 16);
+                if (!isNaN(decimalValue)) {
+                    decimalInput.value = decimalValue;
+                    updateValues();
+                }
+            });
+            octalInput.addEventListener('input', () => {
+                const octalValue = octalInput.value;
+                const decimalValue = parseInt(octalValue, 8);
+                if (!isNaN(decimalValue)) {
+                    decimalInput.value = decimalValue;
+                    updateValues();
+                }
+            });
+            binaryInput.addEventListener('input', () => {
+                const binaryValue = binaryInput.value;
+                const decimalValue = parseInt(binaryValue, 2);
+                if (!isNaN(decimalValue)) {
+                    decimalInput.value = decimalValue;
+                    updateValues();
+                }
+            });
+
+            // Event-Listener für Checkboxen
+            binaryCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateFromCheckboxes);
+            });
+
+            // Event-Listener für Buttons
+            invertBitsButton.addEventListener('click', () => {
+                binaryCheckboxes.forEach(checkbox => {
+                    checkbox.checked = !checkbox.checked;
+                });
+                updateFromCheckboxes();
+            });
+
+            setAllBitsButton.addEventListener('click', () => {
+                binaryCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                updateFromCheckboxes();
+            });
+
+            // Event-Listener für Datum und Uhrzeit
+            dateInput.addEventListener('change', () => {
+                console.log('Datum ausgewählt:', dateInput.value);
+            });
+
+            timeInput.addEventListener('change', () => {
+                console.log('Uhrzeit ausgewählt:', timeInput.value);
+            });
+
+            // Initiales Update
+            updateValues();
+        });
+    </script>
 </body>
 </html>
