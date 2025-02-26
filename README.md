@@ -7,3 +7,5 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [ VDC ](vdc-fr-chatGPT.html)
 
+[Erde](Pizza-Erde-DALL-E.png)
+
