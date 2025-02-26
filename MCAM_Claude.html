@@ -23,7 +23,7 @@
             const toolNumber = Math.floor(Math.random() * 20) + 1;
             const toolNumberString = String(toolNumber).padStart(3, '0');
 
-            const code = `${yearLastDigit}${dayOfYearString}${location}${machineLetter} ${hourLetter}${toolNumberString}`;
+            const code = `${yearLastDigit}${dayOfYearString}${location} ${machineLetter}${hourLetter}${toolNumberString}`;
             document.getElementById('codeDisplay').innerText = code;
         }
     </script>
