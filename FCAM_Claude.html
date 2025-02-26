@@ -259,7 +259,7 @@
             const seconds = now.getSeconds().toString().padStart(2, '0');
             
             // NNN: Zufallszahl zwischen 0 und 101 (dreistellig) Nestnummer
-            const randomNum = Math.floor(Math.random() * 100).toString().padStart(3, '1');
+            const randomNum = Math.floor(Math.random() * 100).toString().padStart(3, '0');
             
             // Zusammensetzen des Codes
             return `${year}${ddd}${location}${machineLetters}${hourLetter}${minutes}${seconds}-${randomNum}`;
