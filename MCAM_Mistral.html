@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generator und Decoder</title>
+    <script>
+        function generateCode() {
+            const now = new Date();
+            const yearLastDigit = now.getFullYear() % 10;
+            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)) + 1;
+            const dayOfYearString = String(dayOfYear).padStart(3, '0');
+
+            const location = document.getElementById('location').value;
+            const machineNumber = parseInt(document.getElementById('machineNumber').value);
+            const machineLetter = String.fromCharCode(65 + machineNumber - 1);
+
+            const hour = parseInt(document.getElementById('hour').value);
+            const hourLetter = String.fromCharCode(65 + hour % 24);
+
+            const toolNumber = parseInt(document.getElementById('toolNumber').value);
+            const toolNumberString = String(toolNumber).padStart(3, '0');
+
+            const code = `${yearLastDigit}${dayOfYearString}${location} ${machineLetter}${hourLetter}${toolNumberString}`;
+            document.getElementById('codeDisplay').innerText = code;
+        }
+
+        function decodeCode() {
+            const code = document.getElementById('codeInput').value.trim();
+            if (code.length !== 11 || code[6] !== ' ') {
+                alert("Ungültiger Code. Bitte überprüfen Sie die Eingabe.");
+                return;
+            }
+
+            const yearLastDigit = code[0];
+            const dayOfYear = parseInt(code.substring(1, 4));
+            const location = code[4];
+            const machineLetter = code[5];
+            const hourLetter = code[7];
+            const toolNumber = parseInt(code.substring(8, 11));
+
+            const year = 2020 + parseInt(yearLastDigit);
+            const date = new Date(year, 0, 1);
+            date.setDate(dayOfYear);
+
+            const machineNumber = machineLetter.charCodeAt(0) - 64;
+            const hour = hourLetter.charCodeAt(0) - 65;
+
+            document.getElementById('decodedResult').innerText = `Datum: ${date.toDateString()}\nUhrzeit: ${hour} Uhr\nMaschinennummer: ${machineNumber}\nToolnummer: ${toolNumber}`;
+        }
+    </script>
+</head>
+<body>
+    <h1>Code Generator und Decoder</h1>
+
+    <h2>Code Generator</h2>
+    <label for="location">Standort (B für Berlin, S für Boston):</label>
+    <select id="location">
+        <option value="B">Berlin</option>
+        <option value="S">Boston</option>
+    </select><br>
+
+    <label for="machineNumber">Maschinennummer (1-5):</label>
+    <input type="number" id="machineNumber" min="1" max="5"><br>
+
+    <label for="hour">Stunde (0-23):</label>
+    <input type="number" id="hour" min="0" max="23"><br>
+
+    <label for="toolNumber">Toolnummer (1-20):</label>
+    <input type="number" id="toolNumber" min="1" max="20"><br>
+
+    <button onclick="generateCode()">Code Generieren</button>
+    <p id="codeDisplay">Hier wird der generierte Code angezeigt.</p>
+
+    <h2>Code Decoder</h2>
+    <label for="codeInput">Code eingeben:</label>
+    <input type="text" id="codeInput"><br>
+    <button onclick="decodeCode()">Code Decodieren</button>
+    <p id="decodedResult">Hier wird das Decodierergebnis angezeigt.</p>
+</body>
+</html>
