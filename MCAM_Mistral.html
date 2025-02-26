@@ -78,6 +78,12 @@
 
             const code = `${yearLastDigit}${dayOfYearString}${location} ${machineLetter}${hourLetter}${minutesString}${toolNumberString}`;
             document.getElementById('codeDisplay').innerText = code;
+
+            // Update input fields
+            document.getElementById('dateInput').value = now.toISOString().split('T')[0];
+            document.getElementById('timeInput').value = now.toTimeString().slice(0, 5);
+            document.getElementById('machineNumber').value = machineNumber;
+            document.getElementById('toolNumber').value = toolNumber;
         }
 
         function decodeCode() {
@@ -108,6 +114,10 @@
             const hour = fromCustomLetter(hourLetter);
 
             document.getElementById('decodedResult').innerText = `Datum: ${date.toDateString()}\nUhrzeit: ${hour}:${minutes}\nMaschinennummer: ${machineNumber}\nToolnummer: ${toolNumber}`;
+        }
+
+        window.onload = function() {
+            document.getElementById('machineNumber').value = '4';
         }
     </script>
 </head>
