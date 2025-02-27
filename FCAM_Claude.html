@@ -179,18 +179,18 @@
         </div>
         
         <hr>
-        <h3>Zufallszahl</h3>
+        <h3>Nestnummer</h3>
         
         <div class="checkbox-group">
             <label class="checkbox-label">
                 <input type="checkbox" id="useRandomNumber" checked>
-                Zufällige Nummer generieren
+                Zufällige Nestnummer generieren
             </label>
         </div>
         
         <div id="randomNumberField" style="display: none;">
             <div class="form-group">
-                <label for="randomNumber">Nummer (0-101):</label>
+                <label for="randomNumber">Nestnummer (1-100):</label>
                 <input type="number" id="randomNumber" min="0" max="101" value="42">
             </div>
         </div>
@@ -210,7 +210,7 @@
             <p><strong>H</strong>: Stunde (Buchstabe außer i und o)</p>
             <p><strong>MM</strong>: Aktuelle Minute</p>
             <p><strong>SS</strong>: Aktuelle Sekunde</p>
-            <p><strong>NNN</strong>: Zufallszahl zwischen 0 und 101 (dreistellig)</p>
+            <p><strong>NNN</strong>: Nestnummer zwischen 1 und 100 (dreistellig)</p>
         </div>
     </div>
     
@@ -232,7 +232,7 @@
             <div class="result-item"><strong>Uhrzeit:</strong> <span id="resultTime"></span></div>
             <div class="result-item"><strong>Standort:</strong> <span id="resultLocation"></span></div>
             <div class="result-item"><strong>Maschinennummer:</strong> <span id="resultMachine"></span></div>
-            <div class="result-item"><strong>Zufallsnummer:</strong> <span id="resultRandom"></span></div>
+            <div class="result-item"><strong>Nestnummer:</strong> <span id="resultRandom"></span></div>
         </div>
     </div>
 
@@ -349,10 +349,10 @@
             // NNN: Zufallszahl oder ausgewählte Nummer
             let randomNum;
             if (document.getElementById('useRandomNumber').checked) {
-                randomNum = Math.floor(Math.random() * 102).toString().padStart(3, '0');
+                randomNum = Math.floor(Math.random() * 100).toString().padStart(3, '1');
             } else {
                 const inputNum = parseInt(document.getElementById('randomNumber').value);
-                randomNum = (isNaN(inputNum) ? 0 : Math.min(inputNum, 101)).toString().padStart(3, '0');
+                randomNum = (isNaN(inputNum) ? 0 : Math.min(inputNum, 100)).toString().padStart(3, '1');
             }
             
             // Zusammensetzen des Codes
