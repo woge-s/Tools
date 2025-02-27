@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code-Generator und Dekoder (Version 2)</title>
+    <title>Code-Generator und Dekoder: YDDDL FHNNMM</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -97,37 +97,11 @@
             color: red;
             margin-top: 10px;
         }
-        .form-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .form-row .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-        .checkbox-group {
-            margin-top: 10px;
-        }
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            font-weight: normal;
-        }
-        .checkbox-label input {
-            width: auto;
-            margin-right: 8px;
-        }
-        hr {
-            margin: 20px 0;
-            border: 0;
-            border-top: 1px solid #ddd;
-        }
     </style>
 </head>
 <body>
-    <h1>Code-Generator und Dekoder (Version 2)</h1>
-    <p class="explanation">Schema: YDDDL FHNNMM</p>
+    <h1>Code-Generator und Dekoder</h1>
+    <p class="explanation">Neues Schema: YDDDL FHNNMM</p>
     
     <div class="tabs">
         <div class="tab active" data-tab="generator">Generator</div>
@@ -136,31 +110,6 @@
     
     <div id="generator" class="tab-content active container">
         <h2>Code-Generator</h2>
-        
-        <div class="checkbox-group">
-            <label class="checkbox-label">
-                <input type="checkbox" id="useCurrentDateTime" checked>
-                Aktuelles Datum und Uhrzeit verwenden
-            </label>
-        </div>
-        
-        <div id="dateTimeFields" style="display: none;">
-            <hr>
-            <h3>Datum und Uhrzeit</h3>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="inputDate">Datum:</label>
-                    <input type="date" id="inputDate">
-                </div>
-                <div class="form-group">
-                    <label for="inputTime">Uhrzeit:</label>
-                    <input type="time" id="inputTime">
-                </div>
-            </div>
-        </div>
-        
-        <hr>
-        <h3>Maschine und Nest</h3>
         
         <div class="form-group">
             <label for="machineNumber">Maschinennummer (1-5):</label>
@@ -249,14 +198,177 @@
             return machine <= 2 ? "S" : "B"; // S für Boston, B für Berlin
         }
         
-        // Hilfsfunktion zum Berechnen des Tages im Jahr
-        function getDayOfYear(date) {
-            const startOfYear = new Date(date.getFullYear(), 0, 0);
-            const diff = date - startOfYear;
+        // Funktion zum Generieren des Codes
+        function generateCode() {
+            const now = new Date();
+            
+            // Y: letzte Ziffer des aktuellen Jahres
+            const year = now.getFullYear().toString().slice(-1);
+            
+            // DDD: Tag des Jahres (dreistellig)
+            const startOfYear = new Date(now.getFullYear(), 0, 0);
+            const diff = now - startOfYear;
             const oneDay = 1000 * 60 * 60 * 24;
-            return Math.floor(diff / oneDay);
+            const dayOfYear = Math.floor(diff / oneDay);
+            const ddd = dayOfYear.toString().padStart(3, '0');
+            
+            // Maschinennummer und zugehöriger Standort
+            const machineNumber = document.getElementById('machineNumber').value;
+            const location = getLocationByMachine(machineNumber);
+            
+            // F: Maschinennummer als Buchstabe
+            const machineLetter = encodeMachineNumber(machineNumber);
+            
+            // H: Stunde (Buchstabe außer i und o)
+            const hourLetter = getHourLetter(now.getHours());
+            
+            // NN: Nestnummer
+            const nestNumber = parseInt(document.getElementById('nestNumber').value);
+            const nestCode = nestNumber.toString().padStart(2, '0');
+            
+            // MM: Aktuelle Minute
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            // Zusammensetzen des Codes mit Leerzeichen nach dem Standort
+            return `${year}${ddd}${location} ${machineLetter}${hourLetter}${nestCode}${minutes}`;
         }
         
-        // Funktion zum Abrufen des ausgewählten Datums und der Uhrzeit
-        function getSelectedDateTime() {
-            if (document.getElementByI
+        // Funktion zum Dekodieren des Codes
+        function decodeCode(code) {
+            // Bereinigung und Überprüfung des Formats (mit oder ohne Leerzeichen)
+            const cleanCode = code.replace(/\s+/g, '');
+            const regex = /^(\d)(\d{3})([BS])([A-HJ-NP-Z])([A-HJ-NP-Z])(\d{2})(\d{2})$/;
+            const match = cleanCode.match(regex);
+            
+            if (!match) {
+                throw new Error("Ungültiges Code-Format. Bitte überprüfen Sie Ihre Eingabe.");
+            }
+            
+            const [_, year, dayOfYear, locationCode, machineLetter, hourLetter, nestNumber, minutes] = match;
+            
+            // Jahr berechnen (aktuelle Dekade annehmen)
+            const currentYear = new Date().getFullYear();
+            const currentDecade = Math.floor(currentYear / 10) * 10;
+            const fullYear = currentDecade + parseInt(year);
+            
+            // Datum berechnen
+            const date = new Date(fullYear, 0, parseInt(dayOfYear));
+            
+            // Standort übersetzen
+            const location = locationCode === 'B' ? 'Berlin' : 'Boston';
+            
+            // Maschinennummer dekodieren
+            const machineNumber = decodeMachineNumber(machineLetter);
+            
+            // Überprüfen der Übereinstimmung von Standort und Maschinennummer
+            const expectedLocation = machineNumber <= 2 ? 'Boston' : 'Berlin';
+            if (location !== expectedLocation) {
+                throw new Error(`Ungültige Kombination: Maschine ${machineNumber} sollte am Standort ${expectedLocation} sein.`);
+            }
+            
+            // Stunde dekodieren
+            const hour = decodeHourLetter(hourLetter);
+            
+            // Nestnummer
+            const nest = parseInt(nestNumber);
+            if (nest < 1 || nest > 20) {
+                throw new Error("Ungültige Nestnummer. Muss zwischen 1 und 20 liegen.");
+            }
+            
+            // Formatiertes Datum und Uhrzeit
+            const formattedDate = date.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            
+            const formattedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
+            
+            return {
+                date: formattedDate,
+                time: formattedTime,
+                location: location,
+                machineNumber: machineNumber,
+                nestNumber: nest
+            };
+        }
+        
+        // Tab-Funktionalität
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Alle Tabs und Tab-Inhalte deaktivieren
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Ausgewählten Tab und Inhalt aktivieren
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // Validierung der Nestnummereingabe
+        function validateNestNumber() {
+            const nestInput = document.getElementById('nestNumber');
+            let value = parseInt(nestInput.value);
+            
+            if (isNaN(value) || value < 1) {
+                value = 1;
+            } else if (value > 20) {
+                value = 20;
+            }
+            
+            nestInput.value = value;
+        }
+        
+        // Dokument geladen
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tabs einrichten
+            setupTabs();
+            
+            // Initialen Code generieren
+            document.getElementById('codeOutput').textContent = generateCode();
+            
+            // Nestnummereingabe validieren
+            document.getElementById('nestNumber').addEventListener('change', validateNestNumber);
+            
+            // Generator-Button-Event
+            document.getElementById('generateBtn').addEventListener('click', function() {
+                validateNestNumber();
+                document.getElementById('codeOutput').textContent = generateCode();
+            });
+            
+            // Dekoder-Button-Event
+            document.getElementById('decodeBtn').addEventListener('click', function() {
+                const code = document.getElementById('codeInput').value.trim();
+                const errorElement = document.getElementById('errorMessage');
+                const resultElement = document.getElementById('decodedResult');
+                
+                try {
+                    const decoded = decodeCode(code);
+                    
+                    // Ergebnisse anzeigen
+                    document.getElementById('resultDate').textContent = decoded.date;
+                    document.getElementById('resultTime').textContent = decoded.time;
+                    document.getElementById('resultLocation').textContent = decoded.location;
+                    document.getElementById('resultMachine').textContent = decoded.machineNumber;
+                    document.getElementById('resultNest').textContent = decoded.nestNumber;
+                    
+                    // Ergebnisbox anzeigen
+                    errorElement.textContent = '';
+                    resultElement.style.display = 'block';
+                    
+                } catch (error) {
+                    // Fehler anzeigen
+                    errorElement.textContent = error.message;
+                    resultElement.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
