@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code-Generator und Dekoder</title>
+    <title>Code-Generator und Dekoder (Version 1)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -96,10 +96,36 @@
             color: red;
             margin-top: 10px;
         }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .checkbox-group {
+            margin-top: 10px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+        }
+        .checkbox-label input {
+            width: auto;
+            margin-right: 8px;
+        }
+        hr {
+            margin: 20px 0;
+            border: 0;
+            border-top: 1px solid #ddd;
+        }
     </style>
 </head>
 <body>
-    <h1>Code-Generator und Dekoder</h1>
+    <h1>Code-Generator und Dekoder (Version 1)</h1>
     
     <div class="tabs">
         <div class="tab active" data-tab="generator">Generator</div>
@@ -109,6 +135,31 @@
     <div id="generator" class="tab-content active container">
         <h2>Code-Generator</h2>
         <p>Schema: YDDDLFFHMMSS-NNN</p>
+        
+        <div class="checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="useCurrentDateTime" checked>
+                Aktuelles Datum und Uhrzeit verwenden
+            </label>
+        </div>
+        
+        <div id="dateTimeFields" style="display: none;">
+            <hr>
+            <h3>Datum und Uhrzeit</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="inputDate">Datum:</label>
+                    <input type="date" id="inputDate">
+                </div>
+                <div class="form-group">
+                    <label for="inputTime">Uhrzeit:</label>
+                    <input type="time" id="inputTime">
+                </div>
+            </div>
+        </div>
+        
+        <hr>
+        <h3>Standort und Maschine</h3>
         
         <div class="form-group">
             <label for="location">Standort:</label>
@@ -127,6 +178,23 @@
             <input type="number" id="machineNumber" min="0" max="24" value="3">
         </div>
         
+        <hr>
+        <h3>Zufallszahl</h3>
+        
+        <div class="checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="useRandomNumber" checked>
+                Zufällige Nummer generieren
+            </label>
+        </div>
+        
+        <div id="randomNumberField" style="display: none;">
+            <div class="form-group">
+                <label for="randomNumber">Nummer (0-101):</label>
+                <input type="number" id="randomNumber" min="0" max="101" value="42">
+            </div>
+        </div>
+        
         <div class="code-display" id="codeOutput">
             Code wird generiert...
         </div>
@@ -142,7 +210,7 @@
             <p><strong>H</strong>: Stunde (Buchstabe außer i und o)</p>
             <p><strong>MM</strong>: Aktuelle Minute</p>
             <p><strong>SS</strong>: Aktuelle Sekunde</p>
-            <p><strong>NNN</strong>: Nestnummer zwischen 1 und 100 (dreistellig)</p>
+            <p><strong>NNN</strong>: Zufallszahl zwischen 0 und 101 (dreistellig)</p>
         </div>
     </div>
     
@@ -164,7 +232,7 @@
             <div class="result-item"><strong>Uhrzeit:</strong> <span id="resultTime"></span></div>
             <div class="result-item"><strong>Standort:</strong> <span id="resultLocation"></span></div>
             <div class="result-item"><strong>Maschinennummer:</strong> <span id="resultMachine"></span></div>
-            <div class="result-item"><strong>Nestnummer:</strong> <span id="resultRandom"></span></div>
+            <div class="result-item"><strong>Zufallsnummer:</strong> <span id="resultRandom"></span></div>
         </div>
     </div>
 
@@ -181,11 +249,6 @@
             'S': 'Boston',
             'V': 'BenCat'
         };
-        
-        const reverseLocations = {};
-        for (const key in locations) {
-            reverseLocations[locations[key]] = key;
-        }
         
         // Funktion zum Konvertieren der Maschinennummer zu Buchstaben
         function convertMachineNumberToLetters(machineNumber) {
@@ -228,18 +291,43 @@
             return alphabet.indexOf(letter.toUpperCase());
         }
         
+        // Funktion zum Abrufen des ausgewählten Datums und der Uhrzeit
+        function getSelectedDateTime() {
+            if (document.getElementById('useCurrentDateTime').checked) {
+                return new Date();
+            } else {
+                const dateInput = document.getElementById('inputDate').value;
+                const timeInput = document.getElementById('inputTime').value;
+                
+                if (!dateInput || !timeInput) {
+                    return new Date();
+                }
+                
+                const [hours, minutes] = timeInput.split(':').map(Number);
+                const date = new Date(dateInput);
+                date.setHours(hours, minutes, 0);
+                
+                return date;
+            }
+        }
+        
+        // Hilfsfunktion zum Berechnen des Tages im Jahr
+        function getDayOfYear(date) {
+            const startOfYear = new Date(date.getFullYear(), 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            return Math.floor(diff / oneDay);
+        }
+        
         // Funktion zum Generieren des Codes
         function generateCode() {
-            const now = new Date();
+            const selectedDate = getSelectedDateTime();
             
             // Y: letzte Ziffer des aktuellen Jahres
-            const year = now.getFullYear().toString().slice(-1);
+            const year = selectedDate.getFullYear().toString().slice(-1);
             
             // DDD: Tag des Jahres (dreistellig)
-            const startOfYear = new Date(now.getFullYear(), 0, 0);
-            const diff = now - startOfYear;
-            const oneDay = 1000 * 60 * 60 * 24;
-            const dayOfYear = Math.floor(diff / oneDay);
+            const dayOfYear = getDayOfYear(selectedDate);
             const ddd = dayOfYear.toString().padStart(3, '0');
             
             // L: Standort 
@@ -250,16 +338,22 @@
             const machineLetters = convertMachineNumberToLetters(machineNumber);
             
             // H: Stunde (Buchstabe außer i und o)
-            const hourLetter = getHourLetter(now.getHours());
+            const hourLetter = getHourLetter(selectedDate.getHours());
             
             // MM: Aktuelle Minute
-            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
             
             // SS: Aktuelle Sekunde
-            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const seconds = selectedDate.getSeconds().toString().padStart(2, '0');
             
-            // NNN: Zufallszahl zwischen 0 und 101 (dreistellig) Nestnummer
-            const randomNum = Math.floor(Math.random() * 100).toString().padStart(3, '0');
+            // NNN: Zufallszahl oder ausgewählte Nummer
+            let randomNum;
+            if (document.getElementById('useRandomNumber').checked) {
+                randomNum = Math.floor(Math.random() * 102).toString().padStart(3, '0');
+            } else {
+                const inputNum = parseInt(document.getElementById('randomNumber').value);
+                randomNum = (isNaN(inputNum) ? 0 : Math.min(inputNum, 101)).toString().padStart(3, '0');
+            }
             
             // Zusammensetzen des Codes
             return `${year}${ddd}${location}${machineLetters}${hourLetter}${minutes}${seconds}-${randomNum}`;
@@ -330,10 +424,49 @@
             });
         }
         
+        // Funktion zum Initialisieren der Datumsfelder
+        function initializeDateFields() {
+            const now = new Date();
+            const dateInput = document.getElementById('inputDate');
+            const timeInput = document.getElementById('inputTime');
+            
+            // Setze aktuelles Datum
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            dateInput.value = `${year}-${month}-${day}`;
+            
+            // Setze aktuelle Zeit
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            timeInput.value = `${hours}:${minutes}`;
+        }
+        
+        // Toggle-Funktionen für die Checkbox-Gruppen
+        function setupToggleVisibility() {
+            // Datum und Uhrzeit
+            document.getElementById('useCurrentDateTime').addEventListener('change', function() {
+                document.getElementById('dateTimeFields').style.display = 
+                    this.checked ? 'none' : 'block';
+            });
+            
+            // Zufallszahl
+            document.getElementById('useRandomNumber').addEventListener('change', function() {
+                document.getElementById('randomNumberField').style.display = 
+                    this.checked ? 'none' : 'block';
+            });
+        }
+        
         // Dokument geladen
         document.addEventListener('DOMContentLoaded', function() {
             // Tabs einrichten
             setupTabs();
+            
+            // Datumsfelder initialisieren
+            initializeDateFields();
+            
+            // Toggle-Funktionen einrichten
+            setupToggleVisibility();
             
             // Initialen Code generieren
             document.getElementById('codeOutput').textContent = generateCode();
