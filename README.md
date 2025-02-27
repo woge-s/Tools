@@ -7,6 +7,8 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [MCAM](MCAM_Mistral.html)
 
+[MCAM C](MCAM_Claude.html)
+
 [ VDC ](vdc-fr-chatGPT.html)
 
 [Erde](https://github.com/woge-s/Tools/blob/main/Pizza-Erde_DALL-E.png)
