@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code-Generator und Dekoder: YDDDL FHNNMM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .code-display {
+            font-family: monospace;
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 4px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .explanation {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #ddd;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .result-box {
+            background-color: #e9f7ef;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .result-item {
+            margin-bottom: 8px;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Code-Generator und Dekoder</h1>
+    <p class="explanation">Neues Schema: YDDDL FHNNMM</p>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="generator">Generator</div>
+        <div class="tab" data-tab="decoder">Dekoder</div>
+    </div>
+    
+    <div id="generator" class="tab-content active container">
+        <h2>Code-Generator</h2>
+        
+        <div class="form-group">
+            <label for="machineNumber">Maschinennummer (1-5):</label>
+            <select id="machineNumber">
+                <option value="1">Maschine 1 (Boston)</option>
+                <option value="2">Maschine 2 (Boston)</option>
+                <option value="3">Maschine 3 (Berlin)</option>
+                <option value="4">Maschine 4 (Berlin)</option>
+                <option value="5">Maschine 5 (Berlin)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="nestNumber">Nestnummer (1-20):</label>
+            <input type="number" id="nestNumber" min="1" max="20" value="1">
+        </div>
+        
+        <div class="code-display" id="codeOutput">
+            Code wird generiert...
+        </div>
+        
+        <button id="generateBtn">Jetzt generieren</button>
+        
+        <div class="explanation">
+            <h3>Code-Erklärung:</h3>
+            <p><strong>Y</strong>: Letzte Ziffer des aktuellen Jahres</p>
+            <p><strong>DDD</strong>: Tag des Jahres (dreistellig)</p>
+            <p><strong>L</strong>: Standort (B=Berlin, S=Boston) - automatisch basierend auf Maschinennummer</p>
+            <p><strong>F</strong>: Maschinennummer (1-5) kodiert als Buchstabe außer i und o</p>
+            <p><strong>H</strong>: Stunde (Buchstabe außer i und o)</p>
+            <p><strong>NN</strong>: Nestnummer (01-20)</p>
+            <p><strong>MM</strong>: Aktuelle Minute</p>
+        </div>
+    </div>
+    
+    <div id="decoder" class="tab-content container">
+        <h2>Code-Dekoder</h2>
+        
+        <div class="form-group">
+            <label for="codeInput">Code eingeben (Format: YDDDL FHNNMM):</label>
+            <input type="text" id="codeInput" placeholder="z.B. 5056S AK0112">
+        </div>
+        
+        <button id="decodeBtn">Dekodieren</button>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="result-box" id="decodedResult" style="display: none;">
+            <h3>Dekodiertes Ergebnis:</h3>
+            <div class="result-item"><strong>Datum:</strong> <span id="resultDate"></span></div>
+            <div class="result-item"><strong>Uhrzeit:</strong> <span id="resultTime"></span></div>
+            <div class="result-item"><strong>Standort:</strong> <span id="resultLocation"></span></div>
+            <div class="result-item"><strong>Maschinennummer:</strong> <span id="resultMachine"></span></div>
+            <div class="result-item"><strong>Nestnummer:</strong> <span id="resultNest"></span></div>
+        </div>
+    </div>
+
+    <script>
+        // Alphabet ohne i und o für Kodierung der Maschinennummern und Stunden
+        const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        
+        // Funktionen zum Kodieren und Dekodieren von Maschinennummern
+        function encodeMachineNumber(number) {
+            const index = Math.min(parseInt(number) - 1, alphabet.length - 1);
+            return alphabet[index];
+        }
+        
+        function decodeMachineNumber(letter) {
+            const index = alphabet.indexOf(letter.toUpperCase());
+            return index >= 0 ? index + 1 : 1;
+        }
+        
+        // Funktion zum Konvertieren der Stunde zu einem Buchstaben
+        function getHourLetter(hour) {
+            return alphabet[hour % alphabet.length];
+        }
+        
+        // Funktion zum Dekodieren des Stundenbuchstabens
+        function decodeHourLetter(letter) {
+            return alphabet.indexOf(letter.toUpperCase());
+        }
+        
+        // Funktion zum Bestimmen des Standorts basierend auf der Maschinennummer
+        function getLocationByMachine(machineNumber) {
+            const machine = parseInt(machineNumber);
+            return machine <= 2 ? "S" : "B"; // S für Boston, B für Berlin
+        }
+        
+        // Funktion zum Generieren des Codes
+        function generateCode() {
+            const now = new Date();
+            
+            // Y: letzte Ziffer des aktuellen Jahres
+            const year = now.getFullYear().toString().slice(-1);
+            
+            // DDD: Tag des Jahres (dreistellig)
+            const startOfYear = new Date(now.getFullYear(), 0, 0);
+            const diff = now - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const dayOfYear = Math.floor(diff / oneDay);
+            const ddd = dayOfYear.toString().padStart(3, '0');
+            
+            // Maschinennummer und zugehöriger Standort
+            const machineNumber = document.getElementById('machineNumber').value;
+            const location = getLocationByMachine(machineNumber);
+            
+            // F: Maschinennummer als Buchstabe
+            const machineLetter = encodeMachineNumber(machineNumber);
+            
+            // H: Stunde (Buchstabe außer i und o)
+            const hourLetter = getHourLetter(now.getHours());
+            
+            // NN: Nestnummer
+            const nestNumber = parseInt(document.getElementById('nestNumber').value);
+            const nestCode = nestNumber.toString().padStart(2, '0');
+            
+            // MM: Aktuelle Minute
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            // Zusammensetzen des Codes mit Leerzeichen nach dem Standort
+            return `${year}${ddd}${location} ${machineLetter}${hourLetter}${nestCode}${minutes}`;
+        }
+        
+        // Funktion zum Dekodieren des Codes
+        function decodeCode(code) {
+            // Bereinigung und Überprüfung des Formats (mit oder ohne Leerzeichen)
+            const cleanCode = code.replace(/\s+/g, '');
+            const regex = /^(\d)(\d{3})([BS])([A-HJ-NP-Z])([A-HJ-NP-Z])(\d{2})(\d{2})$/;
+            const match = cleanCode.match(regex);
+            
+            if (!match) {
+                throw new Error("Ungültiges Code-Format. Bitte überprüfen Sie Ihre Eingabe.");
+            }
+            
+            const [_, year, dayOfYear, locationCode, machineLetter, hourLetter, nestNumber, minutes] = match;
+            
+            // Jahr berechnen (aktuelle Dekade annehmen)
+            const currentYear = new Date().getFullYear();
+            const currentDecade = Math.floor(currentYear / 10) * 10;
+            const fullYear = currentDecade + parseInt(year);
+            
+            // Datum berechnen
+            const date = new Date(fullYear, 0, parseInt(dayOfYear));
+            
+            // Standort übersetzen
+            const location = locationCode === 'B' ? 'Berlin' : 'Boston';
+            
+            // Maschinennummer dekodieren
+            const machineNumber = decodeMachineNumber(machineLetter);
+            
+            // Überprüfen der Übereinstimmung von Standort und Maschinennummer
+            const expectedLocation = machineNumber <= 2 ? 'Boston' : 'Berlin';
+            if (location !== expectedLocation) {
+                throw new Error(`Ungültige Kombination: Maschine ${machineNumber} sollte am Standort ${expectedLocation} sein.`);
+            }
+            
+            // Stunde dekodieren
+            const hour = decodeHourLetter(hourLetter);
+            
+            // Nestnummer
+            const nest = parseInt(nestNumber);
+            if (nest < 1 || nest > 20) {
+                throw new Error("Ungültige Nestnummer. Muss zwischen 1 und 20 liegen.");
+            }
+            
+            // Formatiertes Datum und Uhrzeit
+            const formattedDate = date.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            
+            const formattedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
+            
+            return {
+                date: formattedDate,
+                time: formattedTime,
+                location: location,
+                machineNumber: machineNumber,
+                nestNumber: nest
+            };
+        }
+        
+        // Tab-Funktionalität
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Alle Tabs und Tab-Inhalte deaktivieren
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Ausgewählten Tab und Inhalt aktivieren
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // Validierung der Nestnummereingabe
+        function validateNestNumber() {
+            const nestInput = document.getElementById('nestNumber');
+            let value = parseInt(nestInput.value);
+            
+            if (isNaN(value) || value < 1) {
+                value = 1;
+            } else if (value > 20) {
+                value = 20;
+            }
+            
+            nestInput.value = value;
+        }
+        
+        // Dokument geladen
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tabs einrichten
+            setupTabs();
+            
+            // Initialen Code generieren
+            document.getElementById('codeOutput').textContent = generateCode();
+            
+            // Nestnummereingabe validieren
+            document.getElementById('nestNumber').addEventListener('change', validateNestNumber);
+            
+            // Generator-Button-Event
+            document.getElementById('generateBtn').addEventListener('click', function() {
+                validateNestNumber();
+                document.getElementById('codeOutput').textContent = generateCode();
+            });
+            
+            // Dekoder-Button-Event
+            document.getElementById('decodeBtn').addEventListener('click', function() {
+                const code = document.getElementById('codeInput').value.trim();
+                const errorElement = document.getElementById('errorMessage');
+                const resultElement = document.getElementById('decodedResult');
+                
+                try {
+                    const decoded = decodeCode(code);
+                    
+                    // Ergebnisse anzeigen
+                    document.getElementById('resultDate').textContent = decoded.date;
+                    document.getElementById('resultTime').textContent = decoded.time;
+                    document.getElementById('resultLocation').textContent = decoded.location;
+                    document.getElementById('resultMachine').textContent = decoded.machineNumber;
+                    document.getElementById('resultNest').textContent = decoded.nestNumber;
+                    
+                    // Ergebnisbox anzeigen
+                    errorElement.textContent = '';
+                    resultElement.style.display = 'block';
+                    
+                } catch (error) {
+                    // Fehler anzeigen
+                    errorElement.textContent = error.message;
+                    resultElement.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
