@@ -5,9 +5,7 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [FCAM (Claude)](FCAM_Claude.html)
 
-[MCAM (Mistral)](MCAM_Mistral.html)
-
-[MCAM Claude](MCAM_Claude.html)
+[MCAM (Claude)](MCAM_Claude.html)
 
 [ VDC chatGPT](vdc-fr-chatGPT.html)
 
