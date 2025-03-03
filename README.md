@@ -3,9 +3,9 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [BinOctDezHex 16bit](Bin_Claude.html)
 
-[FCAM Datecode (Claude)](FCAM_Claude.html)
+[FCAM Datecode](FCAM_Claude.html)
 
-[MCAM Datecode (Claude)](MCAM_Claude.html)
+[MCAM Datecode](MCAM_Claude.html)
 
 [ VDC chatGPT](vdc-fr-chatGPT.html)
 
