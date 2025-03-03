@@ -480,7 +480,7 @@
         // Funktion zum Dekodieren des Codes
         function decodeCode(code) {
             // Bereinigung und Überprüfung des Formats (mit oder ohne Leerzeichen)
-            const cleanCode = code.replace(/\s+/g, '');
+            const cleanCode = code.toUpperCase().replace(/\s+/g, '');
             
             // Prüfen auf das Format mit Toolnummer
             const regex = /^(\d)(\d{3})([BS])([A-HJ-NP-Z])([A-HJ-NP-Z])(\d{2})(\d{2})$/;
