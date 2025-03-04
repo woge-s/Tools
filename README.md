@@ -1,7 +1,7 @@
 # Tools Pages
 Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzung im Browser.
 
-[BinOctDezHex 16bit](Bin_Claude.html)
+[BinOctDezHex (16bit)](Bin_Claude.html)
 
 [FCAM Datecode](FCAM_Claude.html)
 
