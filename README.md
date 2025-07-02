@@ -10,4 +10,4 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [Erde](https://github.com/woge-s/Tools/blob/main/Pizza-Erde_DALL-E.png)
 
-[IPA] (MCCAM Datecode.ipa)
+[MCCAM Datecode.ipa]
