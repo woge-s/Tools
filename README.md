@@ -7,10 +7,8 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [MCAM Datecode](MCAM_Claude.html)
 
-
-[Erde](https://github.com/woge-s/Tools/blob/main/Pizza-Erde_DALL-E.png)
-
+[Time Balancer](TC3b.html)
 
 
+[Welt](https://github.com/woge-s/Tools/blob/main/Pizza-Erde_DALL-E.png)
 
-[MCCAM Datecode.ipa](https://github.com/woge-s/Tools/blob/main/MCCAM%20Datecode.ipa)
