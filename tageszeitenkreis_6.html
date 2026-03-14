@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tageszeitenkreis</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:          #f2f0eb;
+  --bg-disc:     #e8e5de;
+  --bg-disc-str: #d0cdc5;
+  --bg-hole-a:   #e0ddd6;
+  --bg-hole-b:   #f2f0eb;
+  --border:      #d4d0c8;
+  --text:        #1a1814;
+  --text-dim:    #888480;
+  --text-faint:  #bbb8b0;
+  --tick-maj:    #a8a59c;
+  --tick-mid:    #d0cdc5;
+  --tick-min:    #e0ddd6;
+  --needle:      #a06010;
+  --handle-bg:   #f2f0eb;
+  --handle-str:  #a06010;
+  --time-lbl:    #a06010;
+  --center-time: #28241e;
+  --center-sec:  #a8a59c;
+  --eyebrow:     #a8a59c;
+  --reset-col:   #a8a59c;
+  --reset-bdr:   #d0cdc5;
+  --input-bg:    #eae7e0;
+  --input-bdr:   #c8c5bc;
+  --input-focus: #a06010;
+  --fill-a1:     #d6e0f0;
+  --fill-f1:     #f0e4d0;
+  --fill-a2:     #d0eaf2;
+  --fill-s1:     #e8d8f4;
+  --acc-a1:      #2858a0;
+  --acc-f1:      #9e560e;
+  --acc-a2:      #127292;
+  --acc-s1:      #6030a8;
+  --acc-f2:      #2a8c5a;
+  --acc-s2:      #b83050;
+  --ring-a1:     rgba(40,88,160,0.3);
+  --ring-f1:     rgba(158,86,14,0.3);
+  --ring-a2:     rgba(18,114,146,0.3);
+  --ring-s1:     rgba(96,48,168,0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:          #08080e;
+    --bg-disc:     #0e0d18;
+    --bg-disc-str: #1e1c2e;
+    --bg-hole-a:   #14121e;
+    --bg-hole-b:   #08080e;
+    --border:      #1c1c28;
+    --text:        #e0d8cc;
+    --text-dim:    #44424e;
+    --text-faint:  #38364a;
+    --tick-maj:    #3a3858;
+    --tick-mid:    #1e1c2c;
+    --tick-min:    #181622;
+    --needle:      #c8943a;
+    --handle-bg:   #08080e;
+    --handle-str:  #c8943a;
+    --time-lbl:    #c8943a;
+    --center-time: #ccc4b2;
+    --center-sec:  #38364a;
+    --eyebrow:     #3a3848;
+    --reset-col:   #3a3858;
+    --reset-bdr:   #1e1c2e;
+    --input-bg:    #12111c;
+    --input-bdr:   #2a2840;
+    --input-focus: #c8943a;
+    --fill-a1:     #0d1525;
+    --fill-f1:     #2a1708;
+    --fill-a2:     #0c1e2e;
+    --fill-s1:     #1c0e2c;
+    --acc-a1:      #3d6fa8;
+    --acc-f1:      #c97c35;
+    --acc-a2:      #3a9bb8;
+    --acc-s1:      #9060c8;
+    --acc-f2:      #3ab87a;
+    --acc-s2:      #e05070;
+    --ring-a1:     rgba(61,111,168,0.65);
+    --ring-f1:     rgba(201,124,53,0.65);
+    --ring-a2:     rgba(58,155,184,0.65);
+    --ring-s1:     rgba(144,96,200,0.65);
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  overflow: hidden;
+}
+
+.wrapper { display:flex; flex-direction:column; align-items:center; }
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: var(--eyebrow);
+  margin-bottom: 1.4rem;
+}
+
+#clock-svg { cursor:default; display:block; }
+.handle-el { cursor:grab; }
+.handle-el:active { cursor:grabbing; }
+
+/* ── Info grid ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 540px;
+  border-top: 1px solid var(--border);
+}
+
+.info-cell {
+  padding: 0.75rem 0.85rem 0.8rem;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.info-cell:last-child { border-right:none; }
+
+.cell-bar { position:absolute; top:0; left:0; right:0; height:2px; }
+
+.cell-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.45rem;
+  margin-top: 0.05rem;
+}
+
+/* Time spinner column */
+.cell-times {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 0.4rem;
+}
+
+.time-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.time-spinner input[type="time"] {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.63rem;
+  background: var(--input-bg);
+  color: var(--text-dim);
+  border: 1px solid var(--input-bdr);
+  border-radius: 2px;
+  padding: 3px 4px;
+  width: 56px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: text;
+  user-select: auto;
+  text-align: center;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.time-spinner input[type="time"]::-webkit-calendar-picker-indicator { display:none; }
+.time-spinner input[type="time"]::-webkit-inner-spin-button { display:none; }
+.time-spinner input[type="time"]:hover  { border-color:var(--input-focus); color:var(--text); }
+.time-spinner input[type="time"]:focus  { border-color:var(--input-focus); color:var(--text); background:var(--bg); }
+
+.spin-btn {
+  width: 56px;
+  height: 13px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-bdr);
+  border-radius: 2px;
+  color: var(--text-faint);
+  font-size: 0.48rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  user-select: none;
+}
+.spin-btn:hover  { color:var(--input-focus); border-color:var(--input-focus); background:var(--bg); }
+.spin-btn:active { color:var(--text); }
+
+.cell-times .sep {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.5rem;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  align-self: center;
+  margin-bottom: 1px;
+}
+
+.cell-dur {
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  margin-bottom: 0.1rem;
+}
+
+/* Overlay sub-section inside A1/A2 cells */
+.cell-overlay-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.5rem -0.85rem 0.5rem;
+}
+
+.cell-overlay-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.cell-overlay-label::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.cell-overlay-dur {
+  font-size: 0.95rem;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+/* ── Reset ── */
+#reset-btn {
+  margin-top: 1.1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--reset-col);
+  background: transparent;
+  border: 1px solid var(--reset-bdr);
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+#reset-btn:hover { color:var(--needle); border-color:var(--needle); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="eyebrow">Tageszeitenkreis</div>
+  <svg id="clock-svg" width="540" height="540" viewBox="-22 -22 584 584"></svg>
+  <div class="info-grid" id="info-grid"></div>
+  <button id="reset-btn" onclick="resetSegments()">&#8635;&nbsp; Reset</button>
+</div>
+
+<script>
+// ── Constants
+const SVGEL  = document.getElementById('clock-svg');
+const CX = 270, CY = 270, OR = 226, IR = 92;
+const HR     = 9;    // main handle radius
+const HR_OV  = 7;    // overlay handle radius
+const OVR    = Math.round((OR + IR) / 2); // 159 — mid-arc radius for overlay handles
+const MIN_SEP = 5;
+const DARK   = window.matchMedia('(prefers-color-scheme: dark)');
+
+// Main segments
+const SEGS = [
+  { name:'A1', fill:'--fill-a1', acc:'--acc-a1', ring:'--ring-a1' },
+  { name:'F1', fill:'--fill-f1', acc:'--acc-f1', ring:'--ring-f1' },
+  { name:'A2', fill:'--fill-a2', acc:'--acc-a2', ring:'--ring-a2' },
+  { name:'S1', fill:'--fill-s1', acc:'--acc-s1', ring:'--ring-s1' },
+];
+
+// Overlay definitions: visual anchor (which panel column), name, accent CSS var
+const OV_DEF = [
+  { parentIdx: 0, name:'S2', acc:'--acc-s2' },
+  { parentIdx: 2, name:'F2', acc:'--acc-f2' },
+];
+
+// Default handle angles
+// A1: 02:00(30°)–06:00(90°), F1: 06:00–14:00(210°), A2: 14:00(210°)–18:00(270°), S1: 18:00–02:00
+const DEFAULT_H  = [30, 90, 210, 270];
+// Overlay defaults: each starts at 1/4 and ends at 3/4 of its parent arc
+// OV[0] on A1 (30°–90°): 45°(03:00)–75°(05:00)
+// OV[1] on A2 (210°–270°): 225°(15:00)–255°(17:00)
+const DEFAULT_OV = [[45, 75], [225, 255]];
+
+let H  = [...DEFAULT_H];
+let OV = DEFAULT_OV.map(p => [...p]);
+let dragging   = null;  // main handle index
+let draggingOv = null;  // { ovIdx, role:'start'|'end' }
+
+// ── CSS variable reader
+function cv(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+// ── Geometry
+function polar(deg, r) {
+  const rad = (deg - 90) * Math.PI / 180;
+  return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
+}
+function sweep(a, b) { return ((b - a) % 360 + 360) % 360; }
+function arcPath(s, e) {
+  const sw = sweep(s, e), lg = sw > 180 ? 1 : 0;
+  const so = polar(s, OR), eo = polar(e, OR);
+  const si = polar(s, IR), ei = polar(e, IR);
+  return `M${si.x},${si.y} L${so.x},${so.y} A${OR},${OR} 0 ${lg} 1 ${eo.x},${eo.y} L${ei.x},${ei.y} A${IR},${IR} 0 ${lg} 0 ${si.x},${si.y}Z`;
+}
+function angleToTime(deg) {
+  const mins = Math.round(((deg % 360 + 360) % 360) / 360 * 1440) % 1440;
+  const h = Math.floor(mins / 60) % 24, m = mins % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function timeToAngle(str) {
+  const [h, m] = str.split(':').map(Number);
+  return ((h * 60 + m) / 1440 * 360 + 360) % 360;
+}
+function sweepToHM(f, t) {
+  const mins = Math.round(sweep(f, t) / 360 * 1440);
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return m ? `${h}h\u202f${String(m).padStart(2,'0')}m` : `${h}h`;
+}
+
+// ── SVG element factory
+function svgEl(tag, attrs) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+
+// ── Render
+function render() {
+  SVGEL.innerHTML = '';
+
+  // defs
+  const defs = svgEl('defs', {});
+  const rg = svgEl('radialGradient', { id:'cg', cx:'50%', cy:'50%', r:'50%' });
+  rg.appendChild(svgEl('stop', { offset:'0%',   'stop-color':cv('--bg-hole-a') }));
+  rg.appendChild(svgEl('stop', { offset:'100%', 'stop-color':cv('--bg-hole-b') }));
+  defs.appendChild(rg);
+  SVGEL.appendChild(defs);
+
+  // disc background
+  SVGEL.appendChild(svgEl('circle', { cx:CX, cy:CY, r:OR+3,
+    fill:cv('--bg-disc'), stroke:cv('--bg-disc-str'), 'stroke-width':'1' }));
+
+  // tick marks
+  for (let i = 0; i < 72; i++) {
+    const deg = i*5, maj = i%6===0, mid = i%3===0 && !maj;
+    const len = maj ? 16 : mid ? 10 : 5;
+    const p1 = polar(deg, OR-1), p2 = polar(deg, OR-1-len);
+    SVGEL.appendChild(svgEl('line', { x1:p1.x, y1:p1.y, x2:p2.x, y2:p2.y,
+      stroke: maj ? cv('--tick-maj') : mid ? cv('--tick-mid') : cv('--tick-min'),
+      'stroke-width': maj ? 1.5 : 1 }));
+  }
+
+  // hour labels – all 24, outside the disc
+  for (let h = 0; h < 24; h++) {
+    const deg = h / 24 * 360;
+    const p = polar(deg, OR + 18);
+    SVGEL.appendChild(svgEl('text', { x:p.x, y:p.y, 'text-anchor':'middle',
+      'dominant-baseline':'central', fill:cv('--tick-maj'),
+      'font-family':'JetBrains Mono, monospace',
+      'font-size': h % 6 === 0 ? '10' : '8',
+      'font-weight': h % 6 === 0 ? '400' : '300',
+      opacity: h % 6 === 0 ? '1' : '0.6' })).textContent = String(h);
+  }
+
+  // ── Main segment arcs
+  SEGS.forEach((seg, i) => {
+    const from = H[i], to = H[(i+1)%4], sw = sweep(from, to);
+    SVGEL.appendChild(svgEl('path', { d:arcPath(from, to), fill:cv(seg.fill),
+      stroke:cv('--bg'), 'stroke-width':'2.5', 'stroke-linejoin':'round' }));
+    if (sw > 18) {
+      const lp = polar(from + sw/2, (OR+IR)/2);
+      const t = svgEl('text', { x:lp.x, y:lp.y, 'text-anchor':'middle',
+        'dominant-baseline':'central', fill:cv(seg.acc),
+        'font-family':'Cormorant Garamond, Georgia, serif',
+        'font-size': sw > 40 ? '13' : '10', 'letter-spacing':'2',
+        opacity: String(Math.min(1, (sw-18)/30)) });
+      t.textContent = seg.name.toUpperCase();
+      SVGEL.appendChild(t);
+    }
+  });
+
+  // ── Overlay arcs (semi-transparent, on top of A1 and A2)
+  OV.forEach((ov, ovIdx) => {
+    const acc = cv(OV_DEF[ovIdx].acc);
+    const sw  = sweep(ov[0], ov[1]);
+
+    // Semi-transparent filled arc
+    SVGEL.appendChild(svgEl('path', {
+      d: arcPath(ov[0], ov[1]),
+      fill: acc, 'fill-opacity': '0.28',
+      stroke: acc, 'stroke-width': '1.5',
+      'stroke-dasharray': '5 3',
+      'stroke-opacity': '0.65',
+      'stroke-linejoin': 'round'
+    }));
+
+    // Boundary lines at start and end
+    ['start', 'end'].forEach((role, ri) => {
+      const deg = ov[ri];
+      const pO  = polar(deg, OR);
+      const pI  = polar(deg, IR);
+      SVGEL.appendChild(svgEl('line', {
+        x1:pI.x, y1:pI.y, x2:pO.x, y2:pO.y,
+        stroke:acc, 'stroke-width':'1', 'stroke-opacity':'0.5', 'stroke-dasharray':'3 2'
+      }));
+
+      // Handle at mid-arc radius
+      const p = polar(deg, OVR);
+      // hit area
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR_OV+8),
+        fill:'transparent', class:'handle-el',
+        'data-ov':String(ovIdx), 'data-ov-role':role }));
+      // outer dashed ring
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR_OV+4),
+        fill:'none', stroke:acc, 'stroke-width':'1',
+        'stroke-dasharray':'3 2', 'stroke-opacity':'0.6' }));
+      // filled handle body
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR_OV),
+        fill:acc, 'fill-opacity':'0.85',
+        stroke:cv('--bg'), 'stroke-width':'1.5',
+        class:'handle-el', 'data-ov':String(ovIdx), 'data-ov-role':role }));
+
+      // Time label outward from handle
+      const lp = polar(deg, OVR + 22);
+      SVGEL.appendChild(svgEl('text', { x:lp.x, y:lp.y, 'text-anchor':'middle',
+        'dominant-baseline':'central', fill:acc,
+        'font-family':'JetBrains Mono, monospace', 'font-size':'8.5',
+        'letter-spacing':'0.4', 'fill-opacity':'0.9' })).textContent = angleToTime(deg);
+    });
+  });
+
+  // ── Center hole
+  SVGEL.appendChild(svgEl('circle', { cx:CX, cy:CY, r:IR, fill:'url(#cg)' }));
+  SVGEL.appendChild(svgEl('circle', { cx:CX, cy:CY, r:IR, fill:'none',
+    stroke:cv('--bg-disc-str'), 'stroke-width':'1' }));
+
+  // ── Current-time needle
+  const now = new Date();
+  const nd  = (now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds()) / 86400 * 360;
+  const np1 = polar(nd, IR+8), np2 = polar(nd, OR-8);
+  SVGEL.appendChild(svgEl('line', { x1:np1.x, y1:np1.y, x2:np2.x, y2:np2.y,
+    stroke:cv('--needle'), 'stroke-width':'1.5', opacity:'0.75' }));
+  SVGEL.appendChild(svgEl('circle', { cx:np2.x, cy:np2.y, r:'3.5',
+    fill:cv('--needle'), opacity:'0.85' }));
+
+  // ── Center clock
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  SVGEL.appendChild(svgEl('text', { x:CX, y:CY-10, 'text-anchor':'middle',
+    'dominant-baseline':'central', fill:cv('--center-time'),
+    'font-family':'JetBrains Mono, monospace',
+    'font-size':'26', 'font-weight':'300', 'letter-spacing':'2' })).textContent = `${hh}:${mm}`;
+  SVGEL.appendChild(svgEl('text', { x:CX, y:CY+20, 'text-anchor':'middle',
+    'dominant-baseline':'central', fill:cv('--center-sec'),
+    'font-family':'JetBrains Mono, monospace',
+    'font-size':'13', 'font-weight':'300', 'letter-spacing':'3' })).textContent = ss;
+
+  // ── Main segment handles (drawn on top)
+  H.forEach((deg, i) => {
+    const p = polar(deg, OR);
+    SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR+8),
+      fill:'transparent', class:'handle-el', 'data-h':String(i) }));
+    SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR+5),
+      fill:'none', stroke:cv(SEGS[i].ring), 'stroke-width':'1', opacity:'0.6' }));
+    SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR),
+      fill:cv('--handle-bg'), stroke:cv('--handle-str'), 'stroke-width':'2',
+      class:'handle-el', 'data-h':String(i) }));
+    SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:'2.5', fill:cv('--needle') }));
+    const lp = polar(deg, OR+24);
+    SVGEL.appendChild(svgEl('text', { x:lp.x, y:lp.y, 'text-anchor':'middle',
+      'dominant-baseline':'central', fill:cv('--time-lbl'),
+      'font-family':'JetBrains Mono, monospace', 'font-size':'9.5',
+      'letter-spacing':'0.5' })).textContent = angleToTime(deg);
+  });
+
+  syncInfo();
+}
+
+// ── Info panel ────────────────────────────────────────────────────────────
+
+function makeSpinner(val, onStep) {
+  const wrap = document.createElement('div');
+  wrap.className = 'time-spinner';
+
+  const btnUp = document.createElement('button');
+  btnUp.className = 'spin-btn'; btnUp.textContent = '▲'; btnUp.type = 'button';
+
+  const inp = document.createElement('input');
+  inp.type = 'time'; inp.value = val;
+  inp.addEventListener('focus',   () => { inp.dataset.active = '1'; });
+  inp.addEventListener('blur',    () => { delete inp.dataset.active; inp.dispatchEvent(new Event('commit')); });
+  inp.addEventListener('change',  () => inp.dispatchEvent(new Event('commit')));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+
+  const btnDn = document.createElement('button');
+  btnDn.className = 'spin-btn'; btnDn.textContent = '▼'; btnDn.type = 'button';
+
+  let repeatTimer = null;
+  function startRepeat(dir) {
+    onStep(dir);
+    repeatTimer = setTimeout(function go() { onStep(dir); repeatTimer = setTimeout(go, 80); }, 400);
+  }
+  function stopRepeat() { clearTimeout(repeatTimer); repeatTimer = null; }
+
+  btnUp.addEventListener('mousedown',  e => { e.preventDefault(); startRepeat(+1); });
+  btnDn.addEventListener('mousedown',  e => { e.preventDefault(); startRepeat(-1); });
+  btnUp.addEventListener('touchstart', e => { e.preventDefault(); startRepeat(+1); }, { passive:false });
+  btnDn.addEventListener('touchstart', e => { e.preventDefault(); startRepeat(-1); }, { passive:false });
+  window.addEventListener('mouseup',  stopRepeat);
+  window.addEventListener('touchend', stopRepeat);
+
+  wrap.appendChild(btnUp); wrap.appendChild(inp); wrap.appendChild(btnDn);
+  return { wrap, inp };
+}
+
+function buildInfo() {
+  const grid = document.getElementById('info-grid');
+  grid.innerHTML = '';
+
+  SEGS.forEach((seg, i) => {
+    const from = H[i], to = H[(i+1)%4];
+    const cell = document.createElement('div');
+    cell.className = 'info-cell';
+
+    // colored top bar
+    const bar = document.createElement('div');
+    bar.className = 'cell-bar'; bar.style.background = cv(seg.acc);
+
+    // segment name
+    const name = document.createElement('div');
+    name.className = 'cell-name'; name.style.color = cv(seg.acc); name.textContent = seg.name;
+
+    // main time spinners
+    const row = document.createElement('div');
+    row.className = 'cell-times';
+
+    const { wrap: wFrom, inp: iFrom } = makeSpinner(angleToTime(from), dir => {
+      stepHandle(i, dir);
+    });
+    iFrom.dataset.mainSeg  = String(i);
+    iFrom.dataset.mainRole = 'from';
+    iFrom.addEventListener('commit', () => {
+      if (iFrom.value) { clampHandle(i, timeToAngle(iFrom.value)); render(); }
+    });
+
+    const sep = document.createElement('span');
+    sep.className = 'sep'; sep.textContent = '–';
+
+    const nextH = (i+1)%4;
+    const { wrap: wTo, inp: iTo } = makeSpinner(angleToTime(to), dir => {
+      stepHandle(nextH, dir);
+    });
+    iTo.dataset.mainSeg  = String(i);
+    iTo.dataset.mainRole = 'to';
+    iTo.addEventListener('commit', () => {
+      if (iTo.value) { clampHandle(nextH, timeToAngle(iTo.value)); render(); }
+    });
+
+    row.appendChild(wFrom); row.appendChild(sep); row.appendChild(wTo);
+
+    // duration
+    const dur = document.createElement('div');
+    dur.className = 'cell-dur'; dur.style.color = cv(seg.acc);
+    dur.textContent = sweepToHM(from, to);
+
+    cell.appendChild(bar); cell.appendChild(name); cell.appendChild(row); cell.appendChild(dur);
+
+    // ── Overlay section for A1 (i=0) and A2 (i=2)
+    const ovIdx = OV_DEF.findIndex(d => d.parentIdx === i);
+    if (ovIdx !== -1) {
+      const [ovFrom, ovTo] = OV[ovIdx];
+      const ovAcc = cv(OV_DEF[ovIdx].acc);
+
+      const divider = document.createElement('div');
+      divider.className = 'cell-overlay-divider';
+
+      const ovLbl = document.createElement('div');
+      ovLbl.className = 'cell-overlay-label';
+      ovLbl.style.color = ovAcc;
+      ovLbl.textContent = 'Layer';
+      ovLbl.querySelector ? null : null;
+      // color the ::before swatch via inline style trick — use a span instead
+      ovLbl.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${ovAcc};opacity:0.7;flex-shrink:0"></span> ${OV_DEF[ovIdx].name}`;
+
+      const ovRow = document.createElement('div');
+      ovRow.className = 'cell-times';
+
+      const { wrap: owFrom, inp: oiFrom } = makeSpinner(angleToTime(ovFrom), dir => {
+        stepOvHandle(ovIdx, 'start', dir);
+      });
+      oiFrom.dataset.ovSeg  = String(ovIdx);
+      oiFrom.dataset.ovRole = 'start';
+      oiFrom.addEventListener('commit', () => {
+        if (oiFrom.value) { clampOvHandle(ovIdx, 'start', timeToAngle(oiFrom.value)); render(); }
+      });
+
+      const ovSep = document.createElement('span');
+      ovSep.className = 'sep'; ovSep.textContent = '–';
+
+      const { wrap: owTo, inp: oiTo } = makeSpinner(angleToTime(ovTo), dir => {
+        stepOvHandle(ovIdx, 'end', dir);
+      });
+      oiTo.dataset.ovSeg  = String(ovIdx);
+      oiTo.dataset.ovRole = 'end';
+      oiTo.addEventListener('commit', () => {
+        if (oiTo.value) { clampOvHandle(ovIdx, 'end', timeToAngle(oiTo.value)); render(); }
+      });
+
+      ovRow.appendChild(owFrom); ovRow.appendChild(ovSep); ovRow.appendChild(owTo);
+
+      const ovDur = document.createElement('div');
+      ovDur.className = 'cell-overlay-dur'; ovDur.style.color = ovAcc;
+      ovDur.textContent = sweepToHM(ovFrom, ovTo);
+
+      cell.appendChild(divider);
+      cell.appendChild(ovLbl);
+      cell.appendChild(ovRow);
+      cell.appendChild(ovDur);
+    }
+
+    grid.appendChild(cell);
+  });
+}
+
+function syncInfo() {
+  const grid = document.getElementById('info-grid');
+  if (!grid.children.length) { buildInfo(); return; }
+
+  SEGS.forEach((_, i) => {
+    const cell = grid.children[i];
+    const from = H[i], to = H[(i+1)%4];
+
+    // main inputs: first two time inputs in cell
+    const allInputs = cell.querySelectorAll('input[type="time"]');
+    if (!allInputs[0].dataset.active) allInputs[0].value = angleToTime(from);
+    if (!allInputs[1].dataset.active) allInputs[1].value = angleToTime(to);
+    cell.querySelector('.cell-dur').textContent = sweepToHM(from, to);
+
+    // overlay inputs (indices 2 and 3 if present)
+    const ovIdx = OV_DEF.findIndex(d => d.parentIdx === i);
+    if (ovIdx !== -1 && allInputs.length >= 4) {
+      const [ovFrom, ovTo] = OV[ovIdx];
+      if (!allInputs[2].dataset.active) allInputs[2].value = angleToTime(ovFrom);
+      if (!allInputs[3].dataset.active) allInputs[3].value = angleToTime(ovTo);
+      cell.querySelector('.cell-overlay-dur').textContent = sweepToHM(ovFrom, ovTo);
+    }
+  });
+}
+
+// ── Handle clamping ───────────────────────────────────────────────────────
+
+function clampHandle(hi, newA) {
+  const prev = H[(hi+3)%4], next = H[(hi+1)%4];
+  const relNext = sweep(prev, next);
+  let relNew = sweep(prev, newA);
+  const hi2 = relNext - MIN_SEP;
+  if (hi2 > MIN_SEP) {
+    relNew = Math.max(MIN_SEP, Math.min(hi2, relNew));
+    H[hi] = (prev + relNew + 360) % 360;
+  }
+  clampAllOv();
+}
+
+function stepHandle(hi, dir) {
+  const currentMins = Math.round(H[hi] / 360 * 1440);
+  const newMins = (currentMins + dir * 15 + 1440) % 1440;
+  clampHandle(hi, newMins / 1440 * 360);
+  render();
+}
+
+function clampOvHandle(ovIdx, role, newA) {
+  const [s, e] = OV[ovIdx];
+  if (role === 'start') {
+    // keep MIN_SEP away from end, wrapping correctly
+    const relE = sweep(newA, e);
+    if (relE >= MIN_SEP) OV[ovIdx][0] = (newA + 360) % 360;
+  } else {
+    const relS = sweep(s, newA);
+    if (relS >= MIN_SEP) OV[ovIdx][1] = (newA + 360) % 360;
+  }
+}
+
+function stepOvHandle(ovIdx, role, dir) {
+  const ri = role === 'start' ? 0 : 1;
+  const currentMins = Math.round(OV[ovIdx][ri] / 360 * 1440);
+  const newMins = (currentMins + dir * 15 + 1440) % 1440;
+  clampOvHandle(ovIdx, role, newMins / 1440 * 360);
+  render();
+}
+
+// No-op: overlays are now free, no re-clamping needed after main handle moves
+function clampAllOv() {}
+
+// ── Drag ─────────────────────────────────────────────────────────────────
+
+function getAngle(e) {
+  const rect = SVGEL.getBoundingClientRect();
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  const x = (cx - rect.left) * 540 / rect.width  - CX;
+  const y = (cy - rect.top)  * 540 / rect.height - CY;
+  let a = Math.atan2(y, x) * 180 / Math.PI + 90;
+  if (a < 0) a += 360; if (a >= 360) a -= 360;
+  return a;
+}
+
+function startDrag(e) {
+  const t = e.target.closest('[data-h]');
+  if (t) { dragging = +t.getAttribute('data-h'); e.preventDefault(); return; }
+  const ov = e.target.closest('[data-ov]');
+  if (ov) {
+    draggingOv = { ovIdx: +ov.getAttribute('data-ov'), role: ov.getAttribute('data-ov-role') };
+    e.preventDefault();
+  }
+}
+
+function onMove(e) {
+  if (dragging === null && draggingOv === null) return;
+  e.preventDefault();
+  const a = getAngle(e);
+  if (dragging !== null) {
+    clampHandle(dragging, a);
+  } else {
+    clampOvHandle(draggingOv.ovIdx, draggingOv.role, a);
+  }
+  render();
+}
+
+function endDrag() { dragging = null; draggingOv = null; }
+
+SVGEL.addEventListener('mousedown',  startDrag);
+SVGEL.addEventListener('touchstart', startDrag, { passive:false });
+window.addEventListener('mousemove', onMove);
+window.addEventListener('touchmove', onMove, { passive:false });
+window.addEventListener('mouseup',   endDrag);
+window.addEventListener('touchend',  endDrag);
+
+// ── Reset ─────────────────────────────────────────────────────────────────
+function resetSegments() {
+  H  = [...DEFAULT_H];
+  OV = DEFAULT_OV.map(p => [...p]);
+  buildInfo();
+  render();
+}
+
+// ── Theme change
+DARK.addEventListener('change', () => { buildInfo(); render(); });
+
+// ── Boot
+buildInfo();
+render();
+setInterval(render, 1000);
+</script>
+</body>
+</html>
