@@ -328,8 +328,6 @@ const CX = 270, CY = 270;
 const OR = 222;    // outer ring radius
 const IR = 96;     // inner hole radius
 const HR = 14;     // main handle radius (larger for touch)
-const HR_OV = 11;  // overlay handle radius
-const OVR   = Math.round((OR + IR) / 2); // mid-arc: 159
 const MIN_SEP = 6;
 const DARK  = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -448,49 +446,66 @@ function render() {
   });
 
   // ── Overlay arcs (semi-transparent)
+  // Handles sit on the INNER ring (IR) — outer ring = main handles, inner = overlay handles
+  const OV_HR = 13;          // handle radius on inner ring
+  const OV_LBL_R = IR - 26; // label radius (inward toward center)
+
   OV.forEach((ov, ovIdx) => {
     const acc = cv(OV_DEF[ovIdx].acc);
     const sw  = sweep(ov[0], ov[1]);
+
+    // semi-transparent filled arc
     SVGEL.appendChild(svgEl('path', {
       d: arcPath(ov[0], ov[1]),
-      fill: acc, 'fill-opacity':'0.25',
-      stroke: acc, 'stroke-width':'2',
-      'stroke-dasharray':'6 3', 'stroke-opacity':'0.7',
+      fill: acc, 'fill-opacity':'0.22',
+      stroke: acc, 'stroke-width':'2.5',
+      'stroke-dasharray':'7 3', 'stroke-opacity':'0.65',
       'stroke-linejoin':'round'
     }));
 
-    // boundary lines
+    // radial boundary lines (full height, inner→outer)
     [0, 1].forEach(ri => {
       const deg = ov[ri];
       SVGEL.appendChild(svgEl('line', {
         x1:polar(deg, IR).x,  y1:polar(deg, IR).y,
         x2:polar(deg, OR).x,  y2:polar(deg, OR).y,
         stroke:acc, 'stroke-width':'1.5',
-        'stroke-dasharray':'4 2', 'stroke-opacity':'0.5'
+        'stroke-dasharray':'4 3', 'stroke-opacity':'0.45'
       }));
+    });
 
+    // ── Overlay handles — ON THE INNER RING
+    [0, 1].forEach(ri => {
+      const deg  = ov[ri];
       const role = ri === 0 ? 'start' : 'end';
-      const p = polar(deg, OVR);
-      // large invisible hit circle
-      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR_OV+14),
+      const p    = polar(deg, IR);
+
+      // very large invisible hit area (easy finger target)
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(OV_HR + 18),
         fill:'transparent', class:'handle-el',
         'data-ov':String(ovIdx), 'data-ov-role':role }));
-      // glow ring
-      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR_OV+5),
+
+      // outer glow ring
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(OV_HR + 6),
         fill:'none', stroke:acc, 'stroke-width':'1.5',
-        'stroke-dasharray':'4 2', 'stroke-opacity':'0.55' }));
-      // handle body
-      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR_OV),
-        fill:acc, 'fill-opacity':'0.9',
-        stroke:cv('--bg'), 'stroke-width':'2',
+        'stroke-dasharray':'5 3', 'stroke-opacity':'0.5' }));
+
+      // handle body — filled, clearly visible
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(OV_HR),
+        fill:acc, 'fill-opacity':'0.92',
+        stroke:cv('--bg'), 'stroke-width':'2.5',
         class:'handle-el', 'data-ov':String(ovIdx), 'data-ov-role':role }));
 
-      // time label
-      const lp = polar(deg, OVR + 26);
+      // small inner dot
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:'3',
+        fill:cv('--bg'), opacity:'0.7' }));
+
+      // time label — inward toward center
+      const lp = polar(deg, OV_LBL_R);
       SVGEL.appendChild(svgEl('text', { x:lp.x, y:lp.y, 'text-anchor':'middle',
         'dominant-baseline':'central', fill:acc,
-        'font-family':'JetBrains Mono, monospace', 'font-size':'10',
-        'fill-opacity':'0.9' })).textContent = angleToTime(deg);
+        'font-family':'JetBrains Mono, monospace', 'font-size':'10.5',
+        'font-weight':'400', 'fill-opacity':'0.95' })).textContent = angleToTime(deg);
     });
   });
 
