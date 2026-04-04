@@ -9,7 +9,7 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [Time Balancer](TC3b.html)
 
-[Neues Zeitgleichgewicht](tageszeitenkreis.html)
+[Neue Zeiten](tageszeitenkreis.html)
 
 [Welt](https://github.com/woge-s/Tools/blob/main/Pizza-Erde_DALL-E.png)
 
