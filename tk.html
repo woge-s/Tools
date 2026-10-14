@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tageszeitenkreis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:          #f2f0eb;
+  --bg-disc:     #e8e5de;
+  --bg-disc-str: #c8c5bc;
+  --bg-hole-a:   #dedad4;
+  --bg-hole-b:   #f2f0eb;
+  --border:      #ccc9c0;
+  --text:        #1a1814;
+  --text-dim:    #706d68;
+  --text-faint:  #aaa79e;
+  --tick-maj:    #989490;
+  --tick-mid:    #ccc9c0;
+  --tick-min:    #dedad4;
+  --needle:      #a06010;
+  --handle-bg:   #f2f0eb;
+  --handle-str:  #a06010;
+  --time-lbl:    #a06010;
+  --center-time: #28241e;
+  --center-sec:  #989490;
+  --eyebrow:     #989490;
+  --reset-col:   #989490;
+  --reset-bdr:   #ccc9c0;
+  --input-bg:    #e8e5de;
+  --input-bdr:   #c0bdb4;
+  --input-focus: #a06010;
+  --fill-a1:     #ccd8ee;
+  --fill-f1:     #eeddd0;
+  --fill-a2:     #c8e4ee;
+  --fill-s1:     #e0d0f0;
+  --acc-a1:      #2858a0;
+  --acc-f1:      #8e4800;
+  --acc-a2:      #0a6882;
+  --acc-s1:      #5828a0;
+  --acc-f2:      #1e7a4a;
+  --acc-s2:      #aa2040;
+  --ring-a1:     rgba(40,88,160,0.35);
+  --ring-f1:     rgba(142,72,0,0.35);
+  --ring-a2:     rgba(10,104,130,0.35);
+  --ring-s1:     rgba(88,40,160,0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:          #08080e;
+    --bg-disc:     #0e0d18;
+    --bg-disc-str: #2a2840;
+    --bg-hole-a:   #14121e;
+    --bg-hole-b:   #08080e;
+    --border:      #1e1c2e;
+    --text:        #e0d8cc;
+    --text-dim:    #706880;
+    --text-faint:  #3a3858;
+    --tick-maj:    #504e68;
+    --tick-mid:    #28263c;
+    --tick-min:    #1c1a2c;
+    --needle:      #c8943a;
+    --handle-bg:   #08080e;
+    --handle-str:  #c8943a;
+    --time-lbl:    #c8943a;
+    --center-time: #dcd4c0;
+    --center-sec:  #504e68;
+    --eyebrow:     #504e68;
+    --reset-col:   #504e68;
+    --reset-bdr:   #1e1c2e;
+    --input-bg:    #12111c;
+    --input-bdr:   #2a2840;
+    --input-focus: #c8943a;
+    --fill-a1:     #0d1525;
+    --fill-f1:     #2a1708;
+    --fill-a2:     #0c1e2e;
+    --fill-s1:     #1c0e2c;
+    --acc-a1:      #4a80c0;
+    --acc-f1:      #d88c45;
+    --acc-a2:      #40aec8;
+    --acc-s1:      #a070d8;
+    --acc-f2:      #40c880;
+    --acc-s2:      #e86080;
+    --ring-a1:     rgba(74,128,192,0.6);
+    --ring-f1:     rgba(216,140,69,0.6);
+    --ring-a2:     rgba(64,174,200,0.6);
+    --ring-s1:     rgba(160,112,216,0.6);
+  }
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+           env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  padding: 1.5rem 0 2rem;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--eyebrow);
+  margin-bottom: 1rem;
+}
+
+.svg-wrap {
+  width: 100%;
+  max-width: 560px;
+  padding: 0 8px;
+}
+#clock-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: none;
+}
+.handle-el { cursor: grab; }
+.handle-el:active { cursor: grabbing; }
+
+.info-grid {
+  width: 100%;
+  max-width: 560px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  padding: 0 8px;
+}
+
+@media (max-width: 480px) {
+  .info-grid { grid-template-columns: repeat(2, 1fr); }
+  .info-cell:nth-child(2) { border-right: none; }
+  .info-cell:nth-child(3) { border-top: 1px solid var(--border); }
+  .info-cell:nth-child(4) { border-top: 1px solid var(--border); }
+}
+
+.info-cell {
+  padding: 0.9rem 0.75rem 0.9rem;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.info-cell:last-child { border-right: none; }
+
+.cell-bar { position:absolute; top:0; left:0; right:0; height:3px; }
+
+.cell-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.55rem;
+  margin-top: 0.1rem;
+}
+
+.cell-times {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.time-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.time-spinner input[type="time"] {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  background: var(--input-bg);
+  color: var(--text-dim);
+  border: 1px solid var(--input-bdr);
+  border-radius: 3px;
+  padding: 5px 4px;
+  width: 62px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: text;
+  user-select: auto;
+  text-align: center;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.time-spinner input[type="time"]::-webkit-calendar-picker-indicator { display:none; }
+.time-spinner input[type="time"]::-webkit-inner-spin-button { display:none; }
+.time-spinner input[type="time"]:hover  { border-color:var(--input-focus); color:var(--text); }
+.time-spinner input[type="time"]:focus  { border-color:var(--input-focus); color:var(--text); background:var(--bg); }
+
+.spin-btn {
+  width: 62px;
+  height: 22px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-bdr);
+  border-radius: 3px;
+  color: var(--text-faint);
+  font-size: 0.6rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.spin-btn:hover  { color:var(--input-focus); border-color:var(--input-focus); background:var(--bg); }
+.spin-btn:active { color:var(--text); background:var(--bg); }
+
+.cell-times .sep {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  align-self: center;
+  padding: 0 1px;
+  padding-bottom: 2px;
+}
+
+.cell-dur {
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin-bottom: 0.1rem;
+}
+
+.cell-weekly {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+  line-height: 1.3;
+}
+
+.cell-overlay-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.6rem -0.75rem 0.55rem;
+}
+
+.cell-overlay-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.45rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cell-overlay-dur {
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.bottom-bar {
+  width: 100%;
+  max-width: 560px;
+  padding: 0 8px;
+  display: flex;
+  justify-content: center;
+}
+
+#reset-btn {
+  margin-top: 1.2rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--reset-col);
+  background: transparent;
+  border: 1px solid var(--reset-bdr);
+  padding: 0.65rem 2rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  border-radius: 3px;
+}
+#reset-btn:hover  { color:var(--needle); border-color:var(--needle); }
+#reset-btn:active { color:var(--text); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="eyebrow">Tageszeitenkreis</div>
+  <div class="svg-wrap">
+    <svg id="clock-svg" viewBox="-30 -30 600 600" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <div class="info-grid" id="info-grid"></div>
+  <div class="bottom-bar">
+    <button id="reset-btn" onclick="resetSegments()">&#8635;&nbsp; Reset</button>
+  </div>
+</div>
+
+<script>
+const SVGEL  = document.getElementById('clock-svg');
+const CX = 270, CY = 270;
+const OR = 222;
+const IR = 96;
+const HR = 14;
+const MIN_SEP = 6;
+const DARK  = window.matchMedia('(prefers-color-scheme: dark)');
+
+const SEGS = [
+  { name:'A1', fill:'--fill-a1', acc:'--acc-a1', ring:'--ring-a1' },
+  { name:'F1', fill:'--fill-f1', acc:'--acc-f1', ring:'--ring-f1' },
+  { name:'A2', fill:'--fill-a2', acc:'--acc-a2', ring:'--ring-a2' },
+  { name:'S1', fill:'--fill-s1', acc:'--acc-s1', ring:'--ring-s1' },
+];
+
+const OV_DEF = [
+  { parentIdx:0, name:'S2', acc:'--acc-s2' },
+  { parentIdx:2, name:'F2', acc:'--acc-f2' },
+];
+
+const DEFAULT_H  = [30, 90, 210, 270]; // A1 (30-90), F1 (90-210), A2 (210-270), S1 (270-30)
+const DEFAULT_OV = [[45, 75], [225, 255]];
+
+let H  = [...DEFAULT_H];
+let OV = DEFAULT_OV.map(p => [...p]);
+let dragging   = null;
+let draggingOv = null;
+
+function cv(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+function polar(deg, r) {
+  const rad = (deg - 90) * Math.PI / 180;
+  return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
+}
+function sweep(a, b) { return ((b - a) % 360 + 360) % 360; }
+function arcPath(s, e) {
+  const sw = sweep(s, e), lg = sw > 180 ? 1 : 0;
+  const so = polar(s, OR), eo = polar(e, OR);
+  const si = polar(s, IR), ei = polar(e, IR);
+  return `M${si.x},${si.y} L${so.x},${so.y} A${OR},${OR} 0 ${lg} 1 ${eo.x},${eo.y} L${ei.x},${ei.y} A${IR},${IR} 0 ${lg} 0 ${si.x},${si.y}Z`;
+}
+function angleToTime(deg) {
+  const mins = Math.round(((deg % 360 + 360) % 360) / 360 * 1440) % 1440;
+  return `${String(Math.floor(mins/60)%24).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
+}
+function timeToAngle(str) {
+  const [h, m] = str.split(':').map(Number);
+  return ((h * 60 + m) / 1440 * 360 + 360) % 360;
+}
+function sweepToHM(f, t) {
+  const mins = Math.round(sweep(f, t) / 360 * 1440);
+  const h = Math.floor(mins/60), m = mins%60;
+  return m ? `${h}h\u202f${String(m).padStart(2,'0')}m` : `${h}h`;
+}
+function getHoursFloat(f, t) {
+  return sweep(f, t) / 360 * 24;
+}
+function svgEl(tag, attrs) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+
+function render() {
+  SVGEL.innerHTML = '';
+
+  const defs = svgEl('defs', {});
+  const rg = svgEl('radialGradient', { id:'cg', cx:'50%', cy:'50%', r:'50%' });
+  rg.appendChild(svgEl('stop', { offset:'0%',   'stop-color':cv('--bg-hole-a') }));
+  rg.appendChild(svgEl('stop', { offset:'100%', 'stop-color':cv('--bg-hole-b') }));
+  defs.appendChild(rg);
+  SVGEL.appendChild(defs);
+
+  SVGEL.appendChild(svgEl('circle', { cx:CX, cy:CY, r:OR+3,
+    fill:cv('--bg-disc'), stroke:cv('--bg-disc-str'), 'stroke-width':'1.5' }));
+
+  for (let i = 0; i < 96; i++) {
+    const deg = i * 3.75;
+    const hour = i % 4 === 0;
+    const len = hour ? (i % 24 === 0 ? 16 : 12) : 6;
+    const p1 = polar(deg, OR), p2 = polar(deg, OR - len);
+    SVGEL.appendChild(svgEl('line', { x1:p1.x, y1:p1.y, x2:p2.x, y2:p2.y,
+      stroke: hour ? cv('--tick-maj') : cv('--tick-min'),
+      'stroke-width': hour ? (i%24===0 ? 2 : 1.5) : 1 }));
+  }
+
+  for (let h = 0; h < 24; h++) {
+    const deg = h / 24 * 360;
+    const maj6 = h % 6 === 0;
+    const p = polar(deg, OR + 20);
+    const t = svgEl('text', { x:p.x, y:p.y, 'text-anchor':'middle',
+      'dominant-baseline':'central', fill: maj6 ? cv('--tick-maj') : cv('--text-faint'),
+      'font-family':'Inter, sans-serif',
+      'font-size': maj6 ? '12' : '10',
+      'font-weight': maj6 ? '500' : '400' });
+    t.textContent = String(h);
+    SVGEL.appendChild(t);
+  }
+
+  SEGS.forEach((seg, i) => {
+    const from = H[i], to = H[(i+1)%4], sw = sweep(from, to);
+    SVGEL.appendChild(svgEl('path', { d:arcPath(from, to), fill:cv(seg.fill),
+      stroke:cv('--bg'), 'stroke-width':'3', 'stroke-linejoin':'round' }));
+    if (sw > 20) {
+      const lp = polar(from + sw/2, (OR+IR)/2);
+      const t = svgEl('text', { x:lp.x, y:lp.y, 'text-anchor':'middle',
+        'dominant-baseline':'central', fill:cv(seg.acc),
+        'font-family':'Inter, sans-serif',
+        'font-size': sw > 50 ? '15' : '12', 'font-weight':'600', 'letter-spacing':'1',
+        opacity: String(Math.min(1, (sw-20)/35)) });
+      t.textContent = seg.name.toUpperCase();
+      SVGEL.appendChild(t);
+    }
+  });
+
+  const OV_HR = 13;
+  const OV_LBL_R = IR - 26;
+
+  OV.forEach((ov, ovIdx) => {
+    const acc = cv(OV_DEF[ovIdx].acc);
+    const sw  = sweep(ov[0], ov[1]);
+
+    SVGEL.appendChild(svgEl('path', {
+      d: arcPath(ov[0], ov[1]),
+      fill: acc, 'fill-opacity':'0.22',
+      stroke: acc, 'stroke-width':'2.5',
+      'stroke-dasharray':'7 3', 'stroke-opacity':'0.65',
+      'stroke-linejoin':'round'
+    }));
+
+    [0, 1].forEach(ri => {
+      const deg = ov[ri];
+      SVGEL.appendChild(svgEl('line', {
+        x1:polar(deg, IR).x,  y1:polar(deg, IR).y,
+        x2:polar(deg, OR).x,  y2:polar(deg, OR).y,
+        stroke:acc, 'stroke-width':'1.5',
+        'stroke-dasharray':'4 3', 'stroke-opacity':'0.45'
+      }));
+    });
+
+    [0, 1].forEach(ri => {
+      const deg  = ov[ri];
+      const role = ri === 0 ? 'start' : 'end';
+      const p    = polar(deg, IR);
+
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(OV_HR + 18),
+        fill:'transparent', class:'handle-el',
+        'data-ov':String(ovIdx), 'data-ov-role':role }));
+
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(OV_HR + 6),
+        fill:'none', stroke:acc, 'stroke-width':'1.5',
+        'stroke-dasharray':'5 3', 'stroke-opacity':'0.5' }));
+
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(OV_HR),
+        fill:acc, 'fill-opacity':'0.92',
+        stroke:cv('--bg'), 'stroke-width':'2.5',
+        class:'handle-el', 'data-ov':String(ovIdx), 'data-ov-role':role }));
+
+      SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:'3',
+        fill:cv('--bg'), opacity:'0.7' }));
+
+      const lp = polar(deg, OV_LBL_R);
+      SVGEL.appendChild(svgEl('text', { x:lp.x, y:lp.y, 'text-anchor':'middle',
+        'dominant-baseline':'central', fill:acc,
+        'font-family':'JetBrains Mono, monospace', 'font-size':'10',
+        'font-weight':'500', 'fill-opacity':'0.95' })).textContent = angleToTime(deg);
+    });
+  });
+
+  SVGEL.appendChild(svgEl('circle', { cx:CX, cy:CY, r:IR, fill:'url(#cg)' }));
+  SVGEL.appendChild(svgEl('circle', { cx:CX, cy:CY, r:IR, fill:'none',
+    stroke:cv('--bg-disc-str'), 'stroke-width':'1.5' }));
+
+  const now = new Date();
+  const nd  = (now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds()) / 86400 * 360;
+  const np1 = polar(nd, IR+10), np2 = polar(nd, OR-10);
+  SVGEL.appendChild(svgEl('line', { x1:np1.x, y1:np1.y, x2:np2.x, y2:np2.y,
+    stroke:cv('--needle'), 'stroke-width':'2', opacity:'0.8' }));
+  SVGEL.appendChild(svgEl('circle', { cx:np2.x, cy:np2.y, r:'4.5',
+    fill:cv('--needle'), opacity:'0.9' }));
+
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  SVGEL.appendChild(svgEl('text', { x:CX, y:CY-12, 'text-anchor':'middle',
+    'dominant-baseline':'central', fill:cv('--center-time'),
+    'font-family':'JetBrains Mono, monospace',
+    'font-size':'28', 'font-weight':'400', 'letter-spacing':'1' })).textContent = `${hh}:${mm}`;
+  SVGEL.appendChild(svgEl('text', { x:CX, y:CY+22, 'text-anchor':'middle',
+    'dominant-baseline':'central', fill:cv('--center-sec'),
+    'font-family':'JetBrains Mono, monospace',
+    'font-size':'15', 'font-weight':'300', 'letter-spacing':'3' })).textContent = ss;
+
+  H.forEach((deg, i) => {
+    const p = polar(deg, OR);
+    SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR+14),
+      fill:'transparent', class:'handle-el', 'data-h':String(i) }));
+    SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR+6),
+      fill:'none', stroke:cv(SEGS[i].ring), 'stroke-width':'1.5', opacity:'0.6' }));
+    SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:String(HR),
+      fill:cv('--handle-bg'), stroke:cv('--handle-str'), 'stroke-width':'2.5',
+      class:'handle-el', 'data-h':String(i) }));
+    SVGEL.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:'3.5', fill:cv('--needle') }));
+    
+    const lp = polar(deg, OR + 38);
+    SVGEL.appendChild(svgEl('text', { x:lp.x, y:lp.y, 'text-anchor':'middle',
+      'dominant-baseline':'central', fill:cv('--time-lbl'),
+      'font-family':'JetBrains Mono, monospace', 'font-size':'10.5',
+      'font-weight':'500' })).textContent = angleToTime(deg);
+  });
+
+  syncInfo();
+}
+
+function makeSpinner(val, onStep) {
+  const wrap = document.createElement('div');
+  wrap.className = 'time-spinner';
+
+  const btnUp = document.createElement('button');
+  btnUp.className = 'spin-btn'; btnUp.textContent = '▲'; btnUp.type = 'button';
+
+  const inp = document.createElement('input');
+  inp.type = 'time'; inp.value = val;
+  inp.addEventListener('focus',   () => { inp.dataset.active = '1'; });
+  inp.addEventListener('blur',    () => { delete inp.dataset.active; inp.dispatchEvent(new Event('commit')); });
+  inp.addEventListener('change',  () => inp.dispatchEvent(new Event('commit')));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+
+  const btnDn = document.createElement('button');
+  btnDn.className = 'spin-btn'; btnDn.textContent = '▼'; btnDn.type = 'button';
+
+  let repeatTimer = null;
+  function startRepeat(dir) {
+    onStep(dir);
+    repeatTimer = setTimeout(function go() {
+      onStep(dir);
+      repeatTimer = setTimeout(go, 80);
+    }, 380);
+  }
+  function stopRepeat() { clearTimeout(repeatTimer); repeatTimer = null; }
+
+  btnUp.addEventListener('mousedown',  e => { e.preventDefault(); startRepeat(+1); });
+  btnDn.addEventListener('mousedown',  e => { e.preventDefault(); startRepeat(-1); });
+  btnUp.addEventListener('touchstart', e => { e.preventDefault(); startRepeat(+1); }, { passive:false });
+  btnDn.addEventListener('touchstart', e => { e.preventDefault(); startRepeat(-1); }, { passive:false });
+  window.addEventListener('mouseup',  stopRepeat);
+  window.addEventListener('touchend', stopRepeat);
+
+  wrap.appendChild(btnUp); wrap.appendChild(inp); wrap.appendChild(btnDn);
+  return { wrap, inp };
+}
+
+function buildInfo() {
+  const grid = document.getElementById('info-grid');
+  grid.innerHTML = '';
+
+  SEGS.forEach((seg, i) => {
+    const from = H[i], to = H[(i+1)%4];
+    const cell = document.createElement('div');
+    cell.className = 'info-cell';
+
+    const bar = document.createElement('div');
+    bar.className = 'cell-bar'; bar.style.background = cv(seg.acc);
+
+    const name = document.createElement('div');
+    name.className = 'cell-name'; name.style.color = cv(seg.acc);
+    name.textContent = seg.name;
+
+    const row = document.createElement('div');
+    row.className = 'cell-times';
+
+    const { wrap:wFrom, inp:iFrom } = makeSpinner(angleToTime(from), dir => stepHandle(i, dir));
+    iFrom.addEventListener('commit', () => {
+      if (iFrom.value) { clampHandle(i, timeToAngle(iFrom.value)); render(); }
+    });
+
+    const sep = document.createElement('span');
+    sep.className = 'sep'; sep.textContent = '–';
+
+    const nh = (i+1)%4;
+    const { wrap:wTo, inp:iTo } = makeSpinner(angleToTime(to), dir => stepHandle(nh, dir));
+    iTo.addEventListener('commit', () => {
+      if (iTo.value) { clampHandle(nh, timeToAngle(iTo.value)); render(); }
+    });
+
+    row.appendChild(wFrom); row.appendChild(sep); row.appendChild(wTo);
+
+    const dur = document.createElement('div');
+    dur.className = 'cell-dur'; dur.style.color = cv(seg.acc);
+    dur.textContent = sweepToHM(from, to);
+
+    cell.appendChild(bar); cell.appendChild(name); cell.appendChild(row); cell.appendChild(dur);
+
+    // Weekly hours info for F1, S1 (indices 1 and 3)
+    if (seg.name === 'F1' || seg.name === 'S1') {
+      const hrs = getHoursFloat(from, to);
+      const weeklyDiv = document.createElement('div');
+      weeklyDiv.className = 'cell-weekly';
+      weeklyDiv.innerHTML = `4T: ${(hrs * 4).toFixed(1)}h<br>5T: ${(hrs * 5).toFixed(1)}h`;
+      cell.appendChild(weeklyDiv);
+    }
+
+    const ovIdx = OV_DEF.findIndex(d => d.parentIdx === i);
+    if (ovIdx !== -1) {
+      const [ovFrom, ovTo] = OV[ovIdx];
+      const ovAcc = cv(OV_DEF[ovIdx].acc);
+
+      cell.appendChild(Object.assign(document.createElement('div'), { className:'cell-overlay-divider' }));
+
+      const lbl = document.createElement('div');
+      lbl.className = 'cell-overlay-label';
+      lbl.style.color = ovAcc;
+      lbl.innerHTML = `<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${ovAcc};opacity:0.8;flex-shrink:0"></span>${OV_DEF[ovIdx].name}`;
+
+      const ovRow = document.createElement('div');
+      ovRow.className = 'cell-times';
+
+      const { wrap:owFrom, inp:oiFrom } = makeSpinner(angleToTime(ovFrom), dir => stepOvHandle(ovIdx,'start',dir));
+      oiFrom.addEventListener('commit', () => {
+        if (oiFrom.value) { clampOvHandle(ovIdx,'start',timeToAngle(oiFrom.value)); render(); }
+      });
+
+      const ovSep = document.createElement('span');
+      ovSep.className = 'sep'; ovSep.textContent = '–';
+
+      const { wrap:owTo, inp:oiTo } = makeSpinner(angleToTime(ovTo), dir => stepOvHandle(ovIdx,'end',dir));
+      oiTo.addEventListener('commit', () => {
+        if (oiTo.value) { clampOvHandle(ovIdx,'end',timeToAngle(oiTo.value)); render(); }
+      });
+
+      ovRow.appendChild(owFrom); ovRow.appendChild(ovSep); ovRow.appendChild(owTo);
+
+      const ovDur = document.createElement('div');
+      ovDur.className = 'cell-overlay-dur'; ovDur.style.color = ovAcc;
+      ovDur.textContent = sweepToHM(ovFrom, ovTo);
+
+      // Weekly hours for F2, S2 overlays
+      const ovHrs = getHoursFloat(ovFrom, ovTo);
+      const ovWeeklyDiv = document.createElement('div');
+      ovWeeklyDiv.className = 'cell-weekly';
+      ovWeeklyDiv.innerHTML = `4T: ${(ovHrs * 4).toFixed(1)}h<br>5T: ${(ovHrs * 5).toFixed(1)}h`;
+
+      cell.appendChild(lbl); cell.appendChild(ovRow); cell.appendChild(ovDur); cell.appendChild(ovWeeklyDiv);
+    }
+
+    grid.appendChild(cell);
+  });
+}
+
+function syncInfo() {
+  const grid = document.getElementById('info-grid');
+  if (!grid.children.length) { buildInfo(); return; }
+
+  SEGS.forEach((seg, i) => {
+    const cell  = grid.children[i];
+    const inps  = cell.querySelectorAll('input[type="time"]');
+    const from  = H[i], to = H[(i+1)%4];
+    if (!inps[0].dataset.active) inps[0].value = angleToTime(from);
+    if (!inps[1].dataset.active) inps[1].value = angleToTime(to);
+    cell.querySelector('.cell-dur').textContent = sweepToHM(from, to);
+
+    if (seg.name === 'F1' || seg.name === 'S1') {
+      const hrs = getHoursFloat(from, to);
+      const weeklyDiv = cell.querySelector('.cell-weekly');
+      if (weeklyDiv) weeklyDiv.innerHTML = `4T: ${(hrs * 4).toFixed(1)}h<br>5T: ${(hrs * 5).toFixed(1)}h`;
+    }
+
+    const ovIdx = OV_DEF.findIndex(d => d.parentIdx === i);
+    if (ovIdx !== -1 && inps.length >= 4) {
+      const [ovFrom, ovTo] = OV[ovIdx];
+      if (!inps[2].dataset.active) inps[2].value = angleToTime(ovFrom);
+      if (!inps[3].dataset.active) inps[3].value = angleToTime(ovTo);
+      cell.querySelector('.cell-overlay-dur').textContent = sweepToHM(ovFrom, ovTo);
+
+      const ovHrs = getHoursFloat(ovFrom, ovTo);
+      const ovWeeklyDivs = cell.querySelectorAll('.cell-weekly');
+      if (ovWeeklyDivs.length > 1) {
+        ovWeeklyDivs[1].innerHTML = `4T: ${(ovHrs * 4).toFixed(1)}h<br>5T: ${(ovHrs * 5).toFixed(1)}h`;
+      }
+    }
+  });
+}
+
+function clampHandle(hi, newA) {
+  // A1 is index 0 (H[0] to H[1]), A2 is index 2 (H[2] to H[3]) -> 60° = 4 hours fixed length
+  const FIXED_LEN = 60; 
+
+  if (hi === 0) {
+    // Moving A1 start -> H[1] must stay H[0] + 60
+    H[0] = (newA + 360) % 360;
+    H[1] = (H[0] + FIXED_LEN) % 360;
+  } else if (hi === 1) {
+    // Moving F1 end / A1 end -> shifts A1 end and keeps length 4h, but bounded by F1/S1 logic
+    H[1] = (newA + 360) % 360;
+    H[0] = (H[1] - FIXED_LEN + 360) % 360;
+  } else if (hi === 2) {
+    // Moving A2 start -> H[3] must stay H[2] + 60
+    H[2] = (newA + 360) % 360;
+    H[3] = (H[2] + FIXED_LEN) % 360;
+  } else if (hi === 3) {
+    // Moving S1 end / A2 end -> shifts A2 end and keeps length 4h
+    H[3] = (newA + 360) % 360;
+    H[2] = (H[3] - FIXED_LEN + 360) % 360;
+  }
+}
+
+function stepHandle(hi, dir) {
+  const m = (Math.round(H[hi] / 360 * 1440) + dir * 15 + 1440) % 1440;
+  clampHandle(hi, m / 1440 * 360);
+  render();
+}
+
+function clampOvHandle(ovIdx, role, newA) {
+  const [s, e] = OV[ovIdx];
+  if (role === 'start') {
+    if (sweep(newA, e) >= MIN_SEP) OV[ovIdx][0] = (newA + 360) % 360;
+  } else {
+    if (sweep(s, newA) >= MIN_SEP) OV[ovIdx][1] = (newA + 360) % 360;
+  }
+}
+
+function stepOvHandle(ovIdx, role, dir) {
+  const ri = role === 'start' ? 0 : 1;
+  const m  = (Math.round(OV[ovIdx][ri] / 360 * 1440) + dir * 15 + 1440) % 1440;
+  clampOvHandle(ovIdx, role, m / 1440 * 360);
+  render();
+}
+
+function getAngle(e) {
+  const rect = SVGEL.getBoundingClientRect();
+  const vbSize = 600;
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  const x  = (cx - rect.left) / rect.width  * vbSize - 30 - CX;
+  const y  = (cy - rect.top)  / rect.height * vbSize - 30 - CY;
+  let a = Math.atan2(y, x) * 180 / Math.PI + 90;
+  if (a < 0) a += 360; if (a >= 360) a -= 360;
+  return a;
+}
+
+function startDrag(e) {
+  const t  = e.target.closest('[data-h]');
+  if (t)  { dragging   = +t.getAttribute('data-h'); e.preventDefault(); return; }
+  const ov = e.target.closest('[data-ov]');
+  if (ov) { draggingOv = { ovIdx:+ov.getAttribute('data-ov'), role:ov.getAttribute('data-ov-role') }; e.preventDefault(); }
+}
+
+function onMove(e) {
+  if (dragging === null && draggingOv === null) return;
+  e.preventDefault();
+  const a = getAngle(e);
+  if (dragging !== null) clampHandle(dragging, a);
+  else                   clampOvHandle(draggingOv.ovIdx, draggingOv.role, a);
+  render();
+}
+
+function endDrag() { dragging = null; draggingOv = null; }
+
+SVGEL.addEventListener('mousedown',  startDrag);
+SVGEL.addEventListener('touchstart', startDrag, { passive:false });
+window.addEventListener('mousemove', onMove);
+window.addEventListener('touchmove', onMove, { passive:false });
+window.addEventListener('mouseup',   endDrag);
+window.addEventListener('touchend',  endDrag);
+
+function resetSegments() {
+  H  = [...DEFAULT_H];
+  OV = DEFAULT_OV.map(p => [...p]);
+  buildInfo();
+  render();
+}
+
+DARK.addEventListener('change', () => { buildInfo(); render(); });
+
+buildInfo();
+render();
+setInterval(render, 1000);
+</script>
+</body>
+</html>
