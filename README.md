@@ -11,5 +11,7 @@ Gesammelte, mit KI-Unterstützung ;-) erstellte HTML-JavaScript-Seiten zur Nutzu
 
 [Neue Zeiten](tageszeitenkreis.html)
 
+[Ganz neue Zeiten] (tk.html)
+
 [Welt](https://github.com/woge-s/Tools/blob/main/Pizza-Erde_DALL-E.png)
 
